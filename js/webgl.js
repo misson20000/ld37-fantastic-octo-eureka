@@ -504,11 +504,17 @@ export let WebGLRenderer = (game, canvas, gl) => {
       let tform = MatrixTransformer.create();
       
       let self = {
-        useMaterial(mat) {
+        useMaterial(mat, block) {
+          let lastMaterial = material;
           if(material) {
             material.flush();
           }
-          material = mat
+          material = mat;
+          if(block) {
+            block();
+            material.flush();
+            material = lastMaterial;
+          }
         },
         useMatrix(mat) {
           tform.useMatrix(mat);

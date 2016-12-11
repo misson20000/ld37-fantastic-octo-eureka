@@ -24,8 +24,8 @@ export let Office = () => {
     initialize(state) {
       self.state = state;
     },
-    x: -640,
-    y: -360,
+    x: 0,
+    y: 0,
     w: 1280,
     h: 720,
     parallax: 1,
@@ -37,9 +37,9 @@ export let Office = () => {
       drawStriped(shapes, 100, 590, 680, 720);
 
       shapes.drawColoredRect(colors.window, 100, 160, 680, 590, 0);
-      shapes.drawColoredRect(colors.trim, 75, 137, 705, 160, 0);
-      shapes.drawColoredRect(colors.trimShadow, 75, 157, 705, 160, 0);
-      shapes.drawColoredRect(colors.trim, 100, 160, 75, 590, 0);
+//      shapes.drawColoredRect(colors.trim, 75, 137, 705, 160, 0);
+ //     shapes.drawColoredRect(colors.trimShadow, 75, 157, 705, 160, 0);
+  //    shapes.drawColoredRect(colors.trim, 100, 160, 75, 590, 0);
       
       shapes.drawColoredRect(colors.carpet, 0, 640, 1280, 720, 0); // carpet
     }

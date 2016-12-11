@@ -70,6 +70,7 @@ export let PlayState = (game, transition) => {
     game,
     font,
     debugMode: false,
+    availableCalls: {},
     camera: {
       x: 0,
       y: 0,
@@ -92,22 +93,39 @@ export let PlayState = (game, transition) => {
     },
     initialize() {
       console.log("initialize play state");
-      //self.addObject(obj.Office());
+      self.addObject(obj.Office());
+      self.addObject(self.notepad = obj.Notepad());
+      self.addObject(self.telephone = obj.Telephone());
       self.addObject(self.fader = obj.Fader());
       self.addObject(self.textBox = obj.TextBox());
       dialogue.linkTextbox(self.textBox);
+      dialogue.linkNotepad(self.notepad);
       dialogue.addCommand("unfade", (params) => {
         self.fader.unfade();
         return Promise.resolve();
       });
       dialogue.addCommand("sfx", (elem) => {
-//        game.sound.playeSound(AssetManager.getAsset(elem.textContent.trim()));
+        game.sound.playSound(AssetManager.getAsset(elem.textContent.trim()));
         return Promise.resolve();
       });
-      dialogue.addCommand("notebook", (elem) => {
+      dialogue.addCommand("notepad", (elem) => {
+        self.notepad.addNote({
+          id: elem.getAttribute("id"),
+          content: elem.textContent.trim()
+        });
         return Promise.resolve();
       });
-      dialogue.begin("andrea.entry");
+      dialogue.addCommand("addCall", (elem) => {
+        self.availableCalls[elem.getAttribute("id")] = {
+          link: elem.getAttribute("link"),
+          title: elem.textContent.trim()
+        };
+        return Promise.resolve();
+      });
+      self.fader.unfade();
+      dialogue.begin("test.contradict").then(() => {
+        self.textBox.hide();
+      });
     },
     drawScene() {
       render.clearBuffers();
@@ -207,7 +225,14 @@ export let PlayState = (game, transition) => {
         }
       }
     },
+    mouse: {},
     tick(delta) {
+      let factor = Math.min(render.width()/width, render.height()/height);
+      let tgtW = width * factor;
+      let tgtH = height * factor;
+      self.mouse.x = (game.mouse.x - (render.width()-tgtW)/2)/factor;
+      self.mouse.y = (game.mouse.y - (render.height()-tgtH)/2)/factor;
+      
       uniformTimer+= delta;
       while(uniformTimer > 5) {
         self.step();

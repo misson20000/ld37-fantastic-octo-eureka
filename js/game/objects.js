@@ -5,3 +5,5 @@ export * from "./train.js";
 export * from "./office.js";
 export * from "./textbox.js";
 export * from "./fader.js";
+export * from "./notepad.js";
+export * from "./telephone.js";

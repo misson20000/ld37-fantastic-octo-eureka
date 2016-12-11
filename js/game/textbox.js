@@ -7,20 +7,24 @@ export let TextBox = () => {
   let font;
 
   let blipmap = {
-    Andrea: "female"
+    Avery: "male",
+    Andrea: "female",
+    Lina: "female",
+    Hale: "hale",
+    Telephone: "nobody"
   };
 
   let blipFor = (person) => {
-    if(person && blipmap[person]) {
-      return AssetManager.getAsset("game.sfx.textblip." + blipmap[person]);
+    if(person && blipmap[person] != undefined) {
+      return blipmap[person];
     } else {
-      return AssetManager.getAsset("game.sfx.textblip.default");
+      return "default";
     }
   };
   
   let self = {
     x: 50,
-    y: 470,
+    y: 500,
     w: 1180,
     h: 200,
     parallax: 0,
@@ -32,13 +36,22 @@ export let TextBox = () => {
     nodPromise: null,
     choicePromise: null,
     nodding: false,
+    skippingEnabled: true,
+    choicesCooldown: 0,
     mode: "text",
     initialize(state) {
       self.state = state;
       font = state.font;
       self.clear();
     },
+    skippable() {
+      self.skippingEnabled = true;
+    },
+    unskippable() {
+      self.skippingEnabled = false;
+    },
     display(text, updatePromises=true) {
+      self.hidden = false;
       self.mode = "text";
       if(self.textPromise && !self.textPromise.resolved && updatePromises) {
         self.textPromise.reject("interrupted");
@@ -47,6 +60,7 @@ export let TextBox = () => {
       self.text = text;
       self.characterAdvanceTimer = 30;
       self.nodding = false;
+      self.color = Colors.WHITE;
       let lines = [];
       let lastBreak = 0;
       let lastI = 0;
@@ -76,10 +90,35 @@ export let TextBox = () => {
         });
       }
     },
+    soliloquy(text) {
+      let p = self.display(text);
+      self.color = colors.soliloquyText;
+      return p;
+    },
+    hide() {
+      self.hidden = true;
+    },
+    unhide() {
+      self.hidden = false;
+    },
+    setPerson(person) {
+      self.person = person;
+      self.setVoice(blipFor(person));
+    },
+    setVoice(voice) {
+      if(voice == "nobody") {
+        self.voice = null;
+      } else {
+        self.voice = AssetManager.getAsset("game.sfx.textblip." + voice);
+      }
+      return self.voice;
+    },
     choices(choices) {
+      self.hidden = false;
       self.choiceList = choices;
       self.mode = "choices";
       self.selectedChoice = 0;
+      self.choicesCooldown = 20;
       return new Promise((resolve, reject) => {
         self.choicePromise = {
           resolve, reject, resolved: false
@@ -102,6 +141,9 @@ export let TextBox = () => {
       });
     },
     draw(shapes, font, matrix, opMatrix) {
+      if(self.hidden) {
+        return;
+      }
       shapes.drawColoredTriangle(colors.textbox.trim,
                                  150, -31,
                                  180, -1,
@@ -131,12 +173,12 @@ export let TextBox = () => {
         let cut = self.displayCutoff;
         for(let i = 0; i < self.lines.length; i++) {
           if(cut > 0) {
-            font.draw(Colors.WHITE, 5, y, 0, self.lines[i].slice(0, cut));
+            font.draw(self.color, 5, y, 0, self.lines[i].slice(0, cut));
           }
           cut-= self.lines[i].length + 1;
           if((i == self.lines.length - 1) && self.nodding) {
             let w = font.computeWidth(self.lines[i]) + 5;
-            shapes.drawColoredRect(Colors.WHITE,
+            shapes.drawColoredRect(self.color,
                                    w, y,
                                    w + 5,
                                    y + font.height - 1, 0);
@@ -181,17 +223,24 @@ export let TextBox = () => {
 
           self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.select"));
         }
-        if(self.state.binds.nod.justPressed()) {
+        self.choicesCooldown--;
+        if(self.state.binds.nod.justPressed() && self.choicesCooldown <= 0) {
           self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.confirm"));
           self.clear();
           self.choicePromise.resolve(self.choiceList[self.selectedChoice].callback());
         }
       }
+      if(self.mode == "text") {
+        if(self.state.binds.nod.justPressed() || self.state.binds.fasterText.justPressed()) {
+          self.characterAdvanceTimer-= 10;
+        }
+      }
     },
+    speed: 1,
     step() {
       self.characterAdvanceTimer-=
-        (self.state.binds.fasterText.isPressed() ||
-         self.state.binds.nod.isPressed()) ? 3 : 1;
+        (self.skippingEnabled && (self.state.binds.fasterText.isPressed() ||
+                                  self.state.binds.nod.isPressed()) ? 3 : 1) * self.speed;
       while(self.characterAdvanceTimer <= 0 && self.displayCutoff < self.text.length) {
         self.displayCutoff++;
         let chr = self.text[self.displayCutoff];
@@ -203,10 +252,7 @@ export let TextBox = () => {
         }
         chr = self.text[self.displayCutoff - 1];
         if(chr && chr.match("[a-zA-Z0-9\\.,\!\?]")) {
-          if(self.blip) {
-//            self.blip.stop();
-          }
-          self.blip = self.state.game.sound.playSound(blipFor(self.person));
+          self.blip = self.state.game.sound.playSound(self.voice);
         }
         if(self.displayCutoff >= self.text.length && self.textPromise) {
           self.displayCutoff = self.text.length;

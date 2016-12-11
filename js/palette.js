@@ -15,5 +15,8 @@ export let colors = {
   textbox: {
     bg: Color(0.07, 0.07, 0.05, 1),
     trim: Color("#8CB856")
-  }
+  },
+  soliloquyText: Color(0.5, 0.5, 1, 1),
+  notepad: Color("#fffc7a"),
+  notepadLines: Color("#c6c6ba")
 };

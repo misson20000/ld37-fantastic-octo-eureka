@@ -57,11 +57,13 @@ export let SoundEngine = (game) => {
       };
     },
     playSound(buffer) {
-      let source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
-      return source;
+      if(buffer) {
+        let source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        return source;
+      }
     },
     createSound(buffer) {
       let source = ctx.createBufferSource();

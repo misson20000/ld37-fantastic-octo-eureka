@@ -1,282 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <dialogues>
-  <group id="andrea">
-    <dialogue id="entry">
-      <person>Andrea</person>
-      <st>                                                                                                                                                                                                       
-        Hello?                                                                                                                                                                                                   
-      </st>
-      <nod />
-      <clear />
-      <person>Avery</person>
-      <st>                                                                                                                                                                                                       
-        This is Detective Avery Saunders with Eagle Eye Detective Agency.                                                                                                                                        
-      </st>                                                                                                                                                                                                      
-      <nod />
-      <st>                                                                                                                                                                                                       
-        Can I ask you a few questions about the night of December 31st?                                                                                                                                          
-      </st>
-      <nod />
-      <clear />                                                                                                                                                                                                  
-      <person>Andrea</person>
-      <st>                                                                                                                                                                                                       
-        O-                                                                                                                                                                                                       
-      </st>
-      <pause length="100" />
-      <st>                                                                                                                                                                                                       
-        oh, of course you can, Detective.                                                                                                                                                                        
-      </st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="350" />
-      <space />
-      <st>                                                                                                                                                                                                       
-        ask me anything.                                                                                                                                                                                         
-      </st>
-      <nod />
-      <unfade />
-      <person>Avery</person>
-      <choices>
-        <choice link="how much did you know about the murder">                                                                                                                                                   
-          How much did you know about the murder?                                                                                                                                                                
-        </choice>
-        <choice link="did you see anything suspicious that night">                                                                                                                                               
-          Did you see anything suspicious that night?                                                                                                                                                            
-        </choice>
-        <choice link="how were you invited to this party">                                                                                                                                                       
-          How were you invited to this party?                                                                                                                                                                    
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="how much did you know about the murder">
-      <person>Andrea</person>
-      <st>
-        Oh, it's simply awful. All I know is that after we woke up the next morning, we all had terrible hangovers, but Brianna saw a fire in the pit outside and decided to go put it out. 
-      </st>
-      <nod />
-      <clear />
-      <st>
-        Five,
-      </st>
-      <pause length="100" />
-      <space />
-      <st>
-        ten minutes later she comes back in sobbing and wailing waking everyone up.
-      </st>
-      <nod />
-      <st>
-        Once we calmed her down enough to figure out what was going on, she told us that there was a.
-      </st>
-      <pause length="170" />
-      <st>.</st>
-      <pause length="170" />
-      <st>.</st>
-      <pause length="170" />
-      <space />
-      <st>
-        a corpse in the firepit!
-      </st>
-      <nod />
-      <clear />
-      <st>
-        Mr. Smith called the cops, the rest of us were in shock.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="what is your relationship with brianna">
-          What is your relationship with Brianna?
-        </choice>
-        <choice link="how much did you have to drink">
-          How much did you have to drink, Ms. Greene?
-        </choice>
-        <choice link="did you see anything suspicious that night">
-          Did you see anything suspicious that night?
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="what is your relationship with brianna">
-      <person>Andrea</person>
-      <st>
-        She's my baby sister. I love her dearly.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="how much did you have to drink">
-          How much did you have to drink, Ms. Greene?
-        </choice>
-        <choice link="did you see anything suspicious that night">
-          Did you see anything suspicious that night?
-        </choice>
-        <choice link="how did you get invited">
-          How did you come upon an invitation to the Smiths' party?
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="how much did you have to drink">
-      <person>Andrea</person>
-      <st>
-        I had.
-      </st>
-      <pause length="120" />
-      <st>.</st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="170" />
-      <space />
-      <st>oh,</st>
-      <pause length="150" />
-      <space />
-      <st>I don't know,</st>
-      <pause length="150" />
-      <space />
-      <st>four,</st>
-      <space />
-      <pause length="150" />
-      <st>
-        five cups of wine? Probably more. Enough to regret it in the morning.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="did you see anything suspicious that night">
-          Did you see anything suspicious that night?
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="did you see anything suspicious that night">
-      <person>Andrea</person>
-      <st>
-        I was rather drunk through most of it, but I do remember one odd thing.
-      </st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="150" />
-      <st>.</st>
-      <pause length="150" />
-      <space />
-      <st>the server boy-</st>
-      <pause length="170" />
-      <space />
-      <st>don't remember his name,</st>
-      <pause length="170" />
-      <space />
-      <st>he kept on talking to people and then writing it down in a</st>
-      <space />
-      <sfx>
-        game.sfx.clue
-      </sfx>
-      <st>
-        little notebook of his.
-      </st>
-      <notebook reference="did you see anything suspicious that night">
-        Server boy's notebook
-      </notebook>
-      <nod />
-      <st>
-        It was certainly strange.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="did you see what he was writing">
-          Did you see what he was writing?
-        </choice>
-        <choice link="how much did you know about the murder">
-          How much do you know about the murder?
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="did you see what he was writing">
-      <person>Andrea</person>
-      <st>
-        Heavens no,
-      </st>
-      <pause length="170" />
-      <space />
-      <st>
-         I didn't. I tried to ask him about it, and he said he was writing down connections or something.
-      </st>
-      <nod />
-      <st>
-        Rather peculiar if you ask me, but I never liked that boy in the first place.
-      </st>
-      <nod />
-      <clear />
-      <st>
-        He tried to flirt with my sister and she could do far better than him.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="what do you mean flirting">
-          What do you mean by that?
-        </choice>
-        <choice link="anything else">
-          Is there anything else you have to say?
-        </choice>
-        <choice link="end call">
-          End call.
-        </choice>
-      </choices>
-    </dialogue>
-
-    <dialogue id="what do you mean flirting">
-      <person>Andrea</person>
-      <st>She's brilliant,</st><space /><pause length="200" />
-      <st>beautiful,</st><space /><pause length="200" />
-      <st>right,</st><space /><pause length="200" />
-      <st>sweet,</st><space /><pause length="200" />
-      <st>and cunning.</st><space /><pause length="200" />
-      <st>
-        She deserves someone much better than a street rat like him.
-      </st>
-      <nod />
-      <clear />
-      <st>
-        Apparently, he's an orphan from New York. No family, no friends, nothing to his name but the clothes on his back, but the Smiths let him work for them. He's damn lucky, that boy, but not lucky enough to get Brianna.
-      </st>
-      <nod />
-      <person>Avery</person>
-      <choices>
-        <choice link="anything else">
-          Is there anything else you have to say?
-        </choice>
-        <choice link="end call">
-          End call.
-        </choice>
-      </choices>
-    </dialogue>
+    <group id="andrea">
+        <dialogue id="entry">
+            <person>Andrea</person>
+            <st>Hello?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>This is Detective Avery Saunders with Eagle Eye Detective Agency.</st>
+            <nod />
+            <st>Can I ask you a few questions about the night of December 31st?</st>
+            <nod />
+            <clear />
+            <person>Andrea</person>
+            <st>O-</st>
+            <pause length="100" />
+            <st>oh, of course you can, Detective.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="350" />
+            <space />
+            <st>ask me anything.</st>
+            <nod />
+            <unfade />
+            <person>Avery</person>
+            <choices>
+                <choice link="how much did you know about the murder">How much did you know about the murder?</choice>
+                <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="how much did you know about the murder">
+            <person>Andrea</person>
+            <st>Oh, it's simply awful. All I know is that after we woke up the next morning, we all had terrible hangovers, but Brianna saw a fire in the pit outside and decided to go put it out.</st>
+            <nod />
+            <clear />
+            <st>Five,</st>
+            <pause length="100" />
+            <space />
+            <st>ten minutes later she comes back in sobbing and wailing waking everyone up.</st>
+            <nod />
+            <st>Once we calmed her down enough to figure out what was going on, she told us that there was a.</st>
+            <pause length="170" />
+            <st>.</st>
+            <pause length="170" />
+            <st>.</st>
+            <pause length="170" />
+            <space />
+            <st>a corpse in the firepit!</st>
+            <nod />
+            <clear />
+            <st>Mr. Smith called the cops, the rest of us were in shock.</st>
+            <nod />
+            <person>Avery</person>
+            <choices>
+                <choice link="what is your relationship with brianna">What is your relationship with Brianna?</choice>
+                <choice link="how much did you have to drink">How much did you have to drink, Ms. Greene?</choice>
+                <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="what is your relationship with brianna">
+            <person>Andrea</person>
+            <st>She's my baby sister. I love her dearly.</st>
+            <nod />
+            <person>Avery</person>
+            <choices>
+                <choice link="how much did you have to drink">How much did you have to drink, Ms. Greene?</choice>
+                <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="how much did you have to drink">
+            <person>Andrea</person>
+            <st>I had.</st>
+            <pause length="120" />
+            <st>.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="170" />
+            <space />
+            <st>oh,</st>
+            <pause length="150" />
+            <space />
+            <st>I don't know,</st>
+            <pause length="150" />
+            <space />
+            <st>four,</st>
+            <space />
+            <pause length="150" />
+            <st>five cups of wine? Probably more. Enough to regret it in the morning.</st>
+            <nod />
+            <person>Avery</person>
+            <choices>
+                <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="did you see anything suspicious that night">
+            <person>Andrea</person>
+            <st>I was rather drunk through most of it, but I do remember one odd thing.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="150" />
+            <st>.</st>
+            <pause length="150" />
+            <space />
+            <st>the server boy-</st>
+            <pause length="170" />
+            <space />
+            <st>don't remember his name,</st>
+            <pause length="170" />
+            <space />
+            <st>he kept on talking to people and then writing it down in a</st>
+            <space />
+            <sfx>game.sfx.clue</sfx>
+            <st>little notebook of his.</st>
+            <notepad id="server boy">Alex Triff's notebook</notepad>
+            <nod />
+            <st>It was certainly strange.</st>
+            <nod />
+            <person>Avery</person>
+            <soliloquy>The server boy-</soliloquy>
+            <pause length="170" />
+            <space />
+            <soliloquy>she must mean Alex Triff.</soliloquy>
+            <nod />
+            <choices>
+                <choice link="did you see what he was writing">Did you see what he was writing?</choice>
+                <choice link="how much did you know about the murder">How much do you know about the murder?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="did you see what he was writing">
+            <person>Andrea</person>
+            <st>Heavens no,</st>
+            <pause length="170" />
+            <space />
+            <st>I didn't. I tried to ask him about it, and he said he was writing down connections or something.</st>
+            <nod />
+            <st>Rather peculiar if you ask me, but I never liked that boy in the first place.</st>
+            <nod />
+            <clear />
+            <st>He tried to flirt with my sister and she could do far better than him.</st>
+            <nod />
+            <notebook id="alexs notebook">Andrea asked Alex about notbook</notebook>
+            <person>Avery</person>
+            <choices>
+                <choice link="what do you mean flirting">What do you mean by that?</choice>
+                <choice link="anything else">Is there anything else you have to say?</choice>
+                <choice link="end call">End call.</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="what do you mean flirting">
+            <person>Andrea</person>
+            <st>She's brilliant,</st>
+            <space />
+            <pause length="200" />
+            <st>beautiful,</st>
+            <space />
+            <pause length="200" />
+            <st>right,</st>
+            <space />
+            <pause length="200" />
+            <st>sweet,</st>
+            <space />
+            <pause length="200" />
+            <st>and cunning.</st>
+            <space />
+            <pause length="200" />
+            <st>She deserves someone much better than a street rat like him.</st>
+            <nod />
+            <clear />
+            <st>Apparently, he's an orphan from New York. No family, no friends, nothing to his name but the clothes on his back, but the Smiths let him work for them. He's damn lucky, that boy, but not lucky enough to get Brianna.</st>
+            <nod />
+            <notebook id="andrea hates alex">Andrea has no fondness for Alex or his flirting with her sister</notebook>
+            <person>Avery</person>
+            <choices>
+                <choice link="anything else">Is there anything else you have to say?</choice>
+                <choice link="end call">End call.</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="anything else">
+            <st person="andrea">Not really, no</st>
+            <jump link="end call" />
+        </dialogue>
+        <dialogue id="end call">
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Ms. Greene. Stay close to the phone in case I have further questions.</st>
+        </dialogue>
+    </group>
+    <group id="hale">
+        <dialogue id="intro">
+            <sfx>game.phone.ringing</sfx>
+            <person>Telephone</person>
+            <unskippable />
+            <st>*Br-r-r-r-r-r-r-r-r-ing!*</st>
+            <space />
+            <pause length="2000" />
+            <sfx>game.phone.ringing</sfx>
+            <st>*Br-r-r-r-r-r-r-r-r-ing!*</st>
+            <space />
+            <pause length="2000" />
+            <sfx>game.phone.ringpickup</sfx>
+            <st>*Br-r-r-r-r-click*</st>
+            <space />
+            <pause length="800" />
+            <clear />
+            <skippable />
+            <person>Avery</person>
+            <st>Hello?</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>Hello Avery, this is Officer Hale.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <soliloquy>(I'm Detective Avery Saunders, with the Eagle Eye Detective Agency. My job is to solve mysteries.)</soliloquy>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Officer Hale. I presume you have a case for me then? Is that what the police report dropped on my desk is?</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>Yes, I had an intern drop that off earlier. I'd like for you to take a look at it as soon as possible. A burnt body was found in the outdoor pit at the ole Smith Manor this morning, completely unrecognizable.</st>
+            <nod />
+            <clear />
+            <notebook id="body status">Burnt, no identification</notebook>
+            <person>Avery</person>
+            <st>At Smith Manor? Didn't they have a big New Year's party yesterday?</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>Yup. We left a list of people who were at the manor on your desk. Several are missing, including the Smiths' daughter Elizabeth, their cook Yolanda, the server boy Alex, and Jeremy Lova, one of the guests.</st>
+            <notepad id="missing people">Missing people: Elizabeth Smith, Yolanda Rodriguez, Alex Triff, Jeremy Lova.</notepad>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>So, any of those four can be our body? Great. Where should I start?</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>Start with Andrea Greene, she's really the only one ready for an interview right now. The Medical Examiner will keep you updated on the status of the body, and I'll keep you updated on who's ready for interviews.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Perfect.</st>
+            <pause length="170" />
+            <space />
+            <st>Thank you, Officer Hale. I'll get right on that, and have this mystery solved in no time.</st>
+            <nod />
+            <clear />
+            <addCall id="andrea" link="andrea.entry">Andrea Greene</addCall>
+            <addCall id="hale" link="hale.call1">Officer Hale</addCall>
+        </dialogue>
+        <dialogue id="call1">
+            <person>Hale</person>
+            <st>Have you interviewed Andrea Greene yet? I'll call you as soon as I get updates on the case. Get to work, Saunders!</st>
+        </dialogue>
+    </group>
+    <group id="smiths">
+        <dialogue id="entry">
+            <person>Lina</person>
+            <st>This is Lina Smith, can I help you?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>This is Detective Avery Saunders with-</st>
+            <clear />
+            <person>Lina</person>
+            <st>Detective?</st>
+            <pause length="170" />
+            <space />
+            <st>Oh,</st>
+            <pause length="170" />
+            <space />
+            <st>dear,</st>
+            <pause length="170" />
+            <space />
+            <st>have you found my daughter?</st>
+            <pause length="170" />
+            <space />
+            <st>E-</st>
+            <pause length="170" />
+            <st>Elizabeth Smith, she's been missing since last night, you have to find her,</st>
+            <pause length="170" />
+            <space />
+            <st>please!</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Ma'am, please calm down.</st>
+            <pause length="170" />
+            <space />
+            <st>We haven't found your daughter, but I need to ask you some questions about last night. It might help our search for Elizabeth.</st>
+            <nod />
+            <clear />
+            <person>Lina</person>
+            <st>Y-</st>
+            <pause length="170" />
+            <st>yes, of course, anything to help my Eliza.</st>
+            <nod />
+            <person>Avery</person>
+            <choices>
+                <choice link="suspicious activity">Last night, did you see any suspicious activity from anyone?</choice>
+                <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="suspicious activity">
+            <person>Lina</person>
+            <st>Well, I mingled with each one of my guests, but I didn't see anything suspicious. Usnavi Malster did have a fight with his on and off again girlfriend, Yolanda, my cook, though.</st>
+            <nod />
+            <clear />
+            <st>She said something along the lines of "</st>
+            <speed factor="0.5" />
+            <voice>male</voice>
+            <st>you'll end up dead one of these days due to your stupidity</st>
+            <speed factor="1.0" />
+            <person>Lina</person>
+            <st>" according to Usnavi.</st>
+            <nod />
+            <clear />
+            <notebook id="usnavi and yolanda fight">Usnavi and Yolanda had fight, possible motive?</notebook>
+            <person>Avery</person>
+            <choices>
+                <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+                <choice link="usnavi yolanda fight">Do you know anything else about the fight?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="last time elizabeth was seen">
+            <person>Lina</person>
+            <st>The last time I saw Eliza, she was with the Lova boy and Alex, our server. The three of them are good friends, you see. It was maybe a half hour before midnight and they were all on the couch laughing.</st>
+            <notepad id="last seen elizabeth jeremy alex">Elizabeth, Jeremy, and Alex were last seen a half hour before midnight.</notepad>
+            <nod />
+            <clear />
+            <st>That's the last time I saw any of them, now that I think about it. Oh, I hope those kids are alright.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="odd behaviour">Were any of them acting oddly?</choice>
+                <choice link="suspicious activity">Did you see any suspicious activity last night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="usnavi yolanda fight">
+            <person>Lina</person>
+            <st>I sent Yolanda home early, she was upset, close to tears. She left the manor just before midnight, I believe. About the fight itself, though? No, I didn't think it was any of my business.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+                <choice link="usnavi">What happened to Usnavi after?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="odd behaviour">
+            <person>Lina</person>
+            <st>The only thing that stood out was Jeremy teasing Alex about something, I didn't catch what it was, but Alex looked very angry at it, and almost stormed off. Eliza caught him, and smoothed it over though.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="reason of reaction">Can you think of any reason Alex would act like that?</choice>
+                <choice link="suspicious activity">Did you see any other suspicious activity that night?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="usnavi">
+            <person>Lina</person>
+            <st>He stayed until after the fireworks. Didn't have much to drink, and drove home around twelve forty-five, I'd say. I drove Hercules Miller home shortly afterwards, I offered to drive him too, but he refused.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="reason of reaction">
+            <person>Lina</person>
+            <st>I have no idea, he never gets angry at his friends so easily like that, not that I've seen, at least.</st>
+            <nod />
+            <clear />
+            <notebook id="unusual behaviour from alex">Alex shows out of the ordinary behaviour</notebook>
+            <person>Avery</person>
+            
+        </dialogue>
+        <dialogue id="end call">
+            
+        </dialogue>
+    </group>
     
-    <dialogue id="anything else">
-      <st person="andrea">
-        Not really, no
-      </st>
-      <jump link="end call">
-      </jump>
-    </dialogue>
-
-    <dialogue id="end call">
-      <person>Avery</person>
-      <st>
-        Thank you for your cooperation, Ms. Greene. Stay close to the phone in case I have further questions.
-      </st>
-    </dialogue>
-  </group>
-
-  <group id="smiths">
-    <dialogue id="entry">
-    </dialogue>
-    <dialogue id="end call">
-    </dialogue>
-  </group>
+    <group id="test">
+        <dialogue id="contradict">
+            <notepad id="no new regulations">
+                The DoM will not be issuing any more regulations this month.
+            </notepad>
+            <person>Hale</person>
+            <st>Detective, the Department of Mathematics just issued a new regulation. 2 + 2 = 5 now.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <evidence note="no new regulations" correct="no new regulations" wrong="wrong evidence">There'ss  prorlem...</evidence>
+            </choices>
+        </dialogue>
+        <dialogue id="no new regulations">
+            <person>Avery</person>
+            <space />
+            <st>The Department of Mathematics called me earlier today. They said they wouldn't be issuing any more regulations this month.</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>:'( you got me</st>
+            <nod />
+            <clear />
+        </dialogue>
+        <dialogue id="wrong evidence">
+            <person>Avery</person>
+            <space />
+            <st>that contradicts what I have written in my notebook!</st>
+            <nod />
+            <clear />
+            <person>Hale</person>
+            <st>How so?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Aaah... umm... I don't know.</st>
+            <nod />
+            <clear />
+            <st>You and your silly notebook! Sounds fine to me. You sure you don't have any screws loose up there?</st>
+            <nod />
+            <clear />
+        </dialogue>
+    </group>
 </dialogues>

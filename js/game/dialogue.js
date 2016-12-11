@@ -31,7 +31,7 @@ export let DialogueLoader = () => {
 };
 
 export let DialogueInterpreter = () => {
-  let tree, textbox;
+  let tree, textbox, notepad;
 
   let state = {
     currentNode: null
@@ -46,19 +46,38 @@ export let DialogueInterpreter = () => {
     linkTextbox(ltextbox) {
       textbox = ltextbox;
     },
+    linkNotepad(lnotepad) {
+      notepad = lnotepad;
+    },
     addCommand(name, func) {
       extraCommands[name] = func;
     },
     interpret(dialogue) {
-      while(dialogue.nodeType == 3) {
+      while(dialogue && dialogue.nodeType == 3) {
         dialogue = dialogue.nextSibling;
       }
+      
+      if(!dialogue) {
+        console.log("reached end of dialogue tree");
+        return Promise.resolve();
+      }
+
       switch(dialogue.localName) {
       case "person":
-        textbox.person = dialogue.textContent.trim();
+        textbox.setPerson(dialogue.textContent.trim());
+        break;
+      case "voice":
+        textbox.setVoice(dialogue.textContent.trim());
+        break;
+      case "speed":
+        textbox.speed = parseFloat(dialogue.getAttribute("factor"));
         break;
       case "st":
         return textbox.display(dialogue.textContent.trim()).then(() => {
+          return interpreter.interpret(dialogue.nextSibling);
+        });
+      case "soliloquy":
+        return textbox.soliloquy(dialogue.textContent.trim()).then(() => {
           return interpreter.interpret(dialogue.nextSibling);
         });
       case "space":
@@ -71,6 +90,12 @@ export let DialogueInterpreter = () => {
         });
       case "clear":
         textbox.clear();
+        break;
+      case "unskippable":
+        textbox.unskippable();
+        break;
+      case "skippable":
+        textbox.skippable();
         break;
       case "pause":
         return new Promise((resolve, reject) => {
@@ -85,21 +110,60 @@ export let DialogueInterpreter = () => {
           if(choice.nodeType == 3) {
             continue;
           }
-          if(choice.localName != "choice") {
-            textbox.display("bad choices child");
-          }
-          if(!choice.hasAttribute("link")) {
-            textbox.display("choice w/o link attribute");
-          }
-          choices.push({
-            content: choice.textContent.trim(),
-            callback: () => {
-              return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
+          switch(choice.localName) {
+          case "choice":
+            if(!choice.hasAttribute("link")) {
+              break;
             }
-          });
+            choices.push({
+              content: choice.textContent.trim(),
+              callback: () => {
+                return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
+              }
+            });
+            break;
+          case "evidence":
+            if(!choice.hasAttribute("note")) {
+              break;
+            }
+            if(!choice.hasAttribute("correct")) {
+              break;
+            }
+            if(!choice.hasAttribute("wrong")) {
+              break;
+            }
+            let person = textbox.person;
+            choices.push({
+              content: choice.textContent.trim(),
+              callback: () => {
+                return textbox.display(choice.textContent.trim()).then(() => {
+                  return notepad.pickEvidence().then((evidence) => {
+                    if(evidence.id == choice.getAttribute("note")) {
+                      return interpreter.begin(choice.getAttribute("correct"), interpreter.findGroup(dialogue));
+                    } else {
+                      return interpreter.begin(choice.getAttribute("wrong"), interpreter.findGroup(dialogue)).then(() => {
+                        textbox.setPerson(person);
+                        return interpreter.interpret(dialogue); // go right back to the choices
+                      });
+                    }
+                  })
+                });
+              }
+            });
+            break;
+          default:
+            choices.push({
+              content: "<" + choice.localName + ">",
+              callback: () => {
+                return textbox.display(choice.outerXML);
+              }
+            });
+          }
         }
         return textbox.choices(choices);
         break;
+      case "jump":
+        return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue));
       default:
         if(extraCommands[dialogue.localName]) {
           return extraCommands[dialogue.localName](dialogue).then(() => {

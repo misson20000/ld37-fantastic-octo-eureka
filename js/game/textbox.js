@@ -5,6 +5,19 @@ import {colors} from "../palette.js";
 
 export let TextBox = () => {
   let font;
+
+  let blipmap = {
+    Andrea: "female"
+  };
+
+  let blipFor = (person) => {
+    if(person && blipmap[person]) {
+      return AssetManager.getAsset("game.sfx.textblip." + blipmap[person]);
+    } else {
+      return AssetManager.getAsset("game.sfx.textblip.default");
+    }
+  };
+  
   let self = {
     x: 50,
     y: 470,
@@ -17,13 +30,16 @@ export let TextBox = () => {
     blipTimer: 0,
     textPromise: null,
     nodPromise: null,
+    choicePromise: null,
     nodding: false,
+    mode: "text",
     initialize(state) {
       self.state = state;
       font = state.font;
       self.clear();
     },
     display(text, updatePromises=true) {
+      self.mode = "text";
       if(self.textPromise && !self.textPromise.resolved && updatePromises) {
         self.textPromise.reject("interrupted");
       }
@@ -60,6 +76,16 @@ export let TextBox = () => {
         });
       }
     },
+    choices(choices) {
+      self.choiceList = choices;
+      self.mode = "choices";
+      self.selectedChoice = 0;
+      return new Promise((resolve, reject) => {
+        self.choicePromise = {
+          resolve, reject, resolved: false
+        };
+      });
+    },
     clear() {
       self.text = "";
       self.lines = [];
@@ -76,25 +102,59 @@ export let TextBox = () => {
       });
     },
     draw(shapes, font, matrix, opMatrix) {
-      shapes.drawColoredRect(Colors.BLACK, 0, 0, 1180, 200, 0);
+      shapes.drawColoredTriangle(colors.textbox.trim,
+                                 150, -31,
+                                 180, -1,
+                                 150, -1, 0);
+      shapes.drawColoredTriangle(colors.textbox.bg,
+                                 150, -30,
+                                 180, 0,
+                                 150, 0, 0);
+      shapes.drawColoredRect(colors.textbox.trim, -1, -1, 1182, 202, 0);
+      shapes.drawColoredRect(colors.textbox.trim, -1, -31, 150, 0, 0);
+      shapes.drawColoredRect(colors.textbox.bg, 0, -30, 150, -1, 0);
+      shapes.drawColoredRect(colors.textbox.bg, 0, 0, 1180, 200, 0);
       shapes.flush();
-      opMatrix.load.scale(3, 3, 1);
+
+      opMatrix.load.scale(2, 2, 1);
       matrix.multiply(opMatrix);
+      if(self.person) {
+        font.draw(Colors.WHITE, 5, -12, 0, self.person);
+      }
+      
+      opMatrix.load.scale(3/2, 3/2, 1);
+      matrix.multiply(opMatrix);
+      
       let y = 4;
-      let cut = self.displayCutoff;
-      for(let i = 0; i < self.lines.length; i++) {
-        if(cut > 0) {
-          font.draw(Colors.WHITE, 5, y, 0, self.lines[i].slice(0, cut));
+      switch(self.mode) {
+      case "text":
+        let cut = self.displayCutoff;
+        for(let i = 0; i < self.lines.length; i++) {
+          if(cut > 0) {
+            font.draw(Colors.WHITE, 5, y, 0, self.lines[i].slice(0, cut));
+          }
+          cut-= self.lines[i].length + 1;
+          if((i == self.lines.length - 1) && self.nodding) {
+            let w = font.computeWidth(self.lines[i]) + 5;
+            shapes.drawColoredRect(Colors.WHITE,
+                                   w, y,
+                                   w + 5,
+                                   y + font.height - 1, 0);
+          }
+          y+= font.height + 4;
         }
-        cut-= self.lines[i].length + 1;
-        if((i == self.lines.length - 1) && self.nodding) {
-          let w = font.computeWidth(self.lines[i]) + 5;
-          shapes.drawColoredRect(Colors.WHITE,
-                                 w, y,
-                                 w + 5,
-                                 y + font.height - 1, 0);
+        break;
+      case "choices":
+        for(let i = 0; i < self.choiceList.length; i++) {
+          if(i == self.selectedChoice) {
+            font.draw(Colors.WHITE, 5, y, 0, ">");
+          }
+          font.draw(Colors.WHITE, 15, y, 0, self.choiceList[i].content);
+          y+= font.height + 4;
         }
-        y+= font.height + 4;
+        break;
+      default:
+        font.draw(Colors.WHITE, 0, 0, 0, "invalid state '" + self.mode + "'");
       }
       font.flush();
     },
@@ -103,6 +163,29 @@ export let TextBox = () => {
         self.display(" ", false);
         self.nodding = false;
         self.nodPromise.resolve();
+      }
+      if(self.mode == "choices") {
+        if(self.state.binds.down.justPressed() ||
+           self.state.binds.left.justPressed()) {
+          self.selectedChoice++;
+          self.selectedChoice%= self.choiceList.length;
+
+          self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.select"));
+        }
+        if(self.state.binds.up.justPressed() ||
+           self.state.binds.right.justPressed()) {
+          if(self.selectedChoice <= 0) {
+            self.selectedChoice = self.choiceList.length;
+          }
+          self.selectedChoice--;
+
+          self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.select"));
+        }
+        if(self.state.binds.nod.justPressed()) {
+          self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.confirm"));
+          self.clear();
+          self.choicePromise.resolve(self.choiceList[self.selectedChoice].callback());
+        }
       }
     },
     step() {
@@ -119,11 +202,11 @@ export let TextBox = () => {
           self.characterAdvanceTimer+= 20;
         }
         chr = self.text[self.displayCutoff - 1];
-        if(chr && chr.match("[a-zA-Z\\.,\!]")) {
+        if(chr && chr.match("[a-zA-Z0-9\\.,\!\?]")) {
           if(self.blip) {
-            self.blip.stop();
+//            self.blip.stop();
           }
-          self.blip = self.state.game.sound.playSound(AssetManager.getAsset("game.sfx.textblip.default"));
+          self.blip = self.state.game.sound.playSound(blipFor(self.person));
         }
         if(self.displayCutoff >= self.text.length && self.textPromise) {
           self.displayCutoff = self.text.length;

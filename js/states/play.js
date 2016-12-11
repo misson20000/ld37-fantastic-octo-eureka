@@ -93,8 +93,20 @@ export let PlayState = (game, transition) => {
     initialize() {
       console.log("initialize play state");
       //self.addObject(obj.Office());
+      self.addObject(self.fader = obj.Fader());
       self.addObject(self.textBox = obj.TextBox());
       dialogue.linkTextbox(self.textBox);
+      dialogue.addCommand("unfade", (params) => {
+        self.fader.unfade();
+        return Promise.resolve();
+      });
+      dialogue.addCommand("sfx", (elem) => {
+//        game.sound.playeSound(AssetManager.getAsset(elem.textContent.trim()));
+        return Promise.resolve();
+      });
+      dialogue.addCommand("notebook", (elem) => {
+        return Promise.resolve();
+      });
       dialogue.begin("andrea.entry");
     },
     drawScene() {
@@ -204,7 +216,7 @@ export let PlayState = (game, transition) => {
       
       for(let i = 0; i < objects.length; i++) {
         if(objects[i].tick) {
-          objects[i].tick();
+          objects[i].tick(delta);
         }
       }
 
@@ -214,14 +226,9 @@ export let PlayState = (game, transition) => {
       }
 
       self.drawScene();
-      matrix.load.identity();
-      self.drawDebugInfoBox([
-        "camera: (" + self.camera.x + ", " + self.camera.y + ")",
-        "camera follow: " + (self.camera.follow ? "#" + self.camera.follow.id : "null")
-      ]);
       shapes.flush();
       font.flush();
-      
+
       transition.draw(delta);
       time+= delta;
     },

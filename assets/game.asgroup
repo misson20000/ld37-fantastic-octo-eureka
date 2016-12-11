@@ -76,5 +76,25 @@
     "type": "sound",
     "id": "game.sfx.textblip.default",
     "src": "/game/textblip.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.sfx.textblip.female",
+    "src": "/game/femaleblip.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.sfx.select",
+    "src": "/game/select.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.sfx.confirm",
+    "src": "/game/confirm.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.sfx.clue",
+    "src": "/game/select.wav"
   }
 ]

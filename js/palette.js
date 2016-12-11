@@ -11,5 +11,9 @@ export let colors = {
   carpet: Color("#171513"),
   window: ColorUtils.pma(Color(0.4, 0.4, 0.5, 0.2)),
   trim: Color(0.75, 0.75, 0.75, 1),
-  trimShadow: Color(0.2, 0.2, 0.2, 1)
+  trimShadow: Color(0.2, 0.2, 0.2, 1),
+  textbox: {
+    bg: Color(0.07, 0.07, 0.05, 1),
+    trim: Color("#8CB856")
+  }
 };

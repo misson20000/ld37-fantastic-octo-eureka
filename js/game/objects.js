@@ -4,3 +4,4 @@ export * from "./ground.js";
 export * from "./train.js";
 export * from "./office.js";
 export * from "./textbox.js";
+export * from "./fader.js";

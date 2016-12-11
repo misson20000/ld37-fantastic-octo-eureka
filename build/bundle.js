@@ -52,7 +52,9 @@
 	
 	var _assetmgr = __webpack_require__(7);
 	
-	var _sound = __webpack_require__(21);
+	var _sound = __webpack_require__(25);
+	
+	var _dialogue = __webpack_require__(24);
 	
 	var game = {};
 	window.theGame = game;
@@ -92,6 +94,7 @@
 	
 	    _assetmgr.AssetManager.addAssetLoader(game.render.createAssetLoader());
 	    _assetmgr.AssetManager.addAssetLoader(game.sound.createAssetLoader());
+	    _assetmgr.AssetManager.addAssetLoader((0, _dialogue.DialogueLoader)());
 	  } catch (err) {
 	    document.write(err);
 	    return;
@@ -183,7 +186,7 @@
 	    throw "Could not open WebGL context";
 	  }
 	  gl.enable(gl.BLEND);
-	  gl.enable(gl.DEPTH_TEST);
+	  //gl.enable(gl.DEPTH_TEST);
 	  gl.clearDepth(0);
 	  gl.depthFunc(gl.GEQUAL);
 	  gl.disable(gl.STENCIL_TEST);
@@ -608,11 +611,11 @@
 	
 	      var self = {
 	        height: font.height,
-	        draw: function draw(color, x, y, string) {
+	        draw: function draw(color, x, y, z, string) {
 	          for (var i = 0; i < string.length; i++) {
 	            var glyph = font.glyphs[string[i]];
 	
-	            rects.drawTexturedAndColoredRect(color, x + glyph.offsetx, y + glyph.offsety, x + glyph.offsetx + glyph.rectw, y + glyph.offsety + glyph.recth, glyph.rectx / font.texture.width, glyph.recty / font.texture.height, (glyph.rectx + glyph.rectw) / font.texture.width, (glyph.recty + glyph.recth) / font.texture.height);
+	            rects.drawTexturedAndColoredRect(color, x + glyph.offsetx, y + glyph.offsety, x + glyph.offsetx + glyph.rectw, y + glyph.offsety + glyph.recth, glyph.rectx / font.texture.width, glyph.recty / font.texture.height, (glyph.rectx + glyph.rectw) / font.texture.width, (glyph.recty + glyph.recth) / font.texture.height, z);
 	
 	            x += glyph.width;
 	          }
@@ -630,8 +633,8 @@
 	
 	          return x;
 	        },
-	        drawCentered: function drawCentered(color, x, y, string) {
-	          self.draw(color, x - self.computeWidth(string) / 2, y, string);
+	        drawCentered: function drawCentered(color, x, y, z, string) {
+	          self.draw(color, x - self.computeWidth(string) / 2, y, z, string);
 	        },
 	        flush: function flush() {
 	          rects.flush();
@@ -1724,28 +1727,32 @@
 	    }
 	  },
 	
-	  getFile: function getFile(file) {
+	  getFile: function getFile(file, linkType) {
+	    var errors = [];
 	    var attempt = function attempt(i) {
 	      var provider = fileProviders[i];
-	      return provider.getFile(file).catch(function (error) {
+	      return provider.getFile(file, linkType).catch(function (error) {
+	        errors.push(error);
 	        if (i < fileProviders.length - 1) {
 	          return attempt(i + 1);
 	        } else {
-	          throw error;
+	          throw errors;
 	        }
 	      });
 	    };
 	    return attempt(0);
 	  },
 	  getURL: function getURL(file) {
+	    var errors = [];
 	    var attempt = function attempt(i) {
 	      try {
-	        return fileProviders[i].getURL(file);
+	        return fileProviders[i].getURL(file, linkType);
 	      } catch (error) {
+	        errors.push(error);
 	        if (i < fileProviders.length - 1) {
 	          return attempt(i + 1);
 	        } else {
-	          throw error;
+	          throw errors;
 	        }
 	      }
 	    };
@@ -1824,7 +1831,10 @@
 	
 	AssetManager.addFileProvider({ // download over the network
 	  priority: -1000,
-	  getFile: function getFile(name) {
+	  getFile: function getFile(name, linkType) {
+	    if (linkType && linkType != "assets") {
+	      return Promise.reject("bad link type: " + linkType);
+	    }
 	    return fetch("assets/" + name.replace(" ", "%20")).then(function (response) {
 	      if (!response.ok) {
 	        throw "HTTP " + response.status + " " + response.statusText + " while downloading assets/" + name.replace(" ", "%20");
@@ -1832,8 +1842,32 @@
 	      return response.blob();
 	    });
 	  },
-	  getURL: function getURL(file) {
+	  getURL: function getURL(file, linkType) {
+	    if (linkType && linkType != "assets") {
+	      throw "bad link type d: " + linkType;
+	    }
 	    return "assets/" + file;
+	  }
+	});
+	
+	AssetManager.addFileProvider({
+	  priority: 0,
+	  getFile: function getFile(name, linkType) {
+	    if (linkType != "remote") {
+	      return Promise.reject("bad link type b: " + linkType + " on " + name);
+	    }
+	    return fetch(name).then(function (response) {
+	      if (!response.ok) {
+	        throw "HTTP " + response.status + " " + response.statusText + " while downloading assets/" + name.replace(" ", "%20");
+	      }
+	      return response.blob();
+	    });
+	  },
+	  getURL: function getURL(file, linkType) {
+	    if (linkType != "remote") {
+	      throw "bad link type c: " + linkType;
+	    }
+	    return file;
 	  }
 	});
 
@@ -1876,6 +1910,9 @@
 	              self.val[i][j] = src.val[i][j];
 	            }
 	          }
+	        },
+	        translateFloor: function translateFloor(x, y, z) {
+	          self.load.translate(Math.floor(x), Math.floor(y), Math.floor(z));
 	        },
 	        translate: function translate(x, y, z) {
 	          self.load.identity();
@@ -2078,6 +2115,9 @@
 	    color.g *= fac;
 	    color.b *= fac;
 	    return color;
+	  },
+	  pma: function pma(color) {
+	    return ColorUtils.multRGB(color, color.a);
 	  }
 	};
 
@@ -2154,10 +2194,10 @@
 	      font.useMatrix(matrix);
 	      smallfont.useMatrix(matrix);
 	      if (!errored) {
-	        font.drawCentered(foregroundColor, 0, -318, "Downloading Resources...");
+	        font.drawCentered(foregroundColor, 0, -318, 0.5, "Downloading Resources...");
 	      } else {
-	        font.drawCentered(foregroundColor, 0, -318, "Error While Downloading Assets:");
-	        smallfont.drawCentered(foregroundColor, 0, -316 + font.height, error);
+	        font.drawCentered(foregroundColor, 0, -318, 0.5, "Error While Downloading Assets:");
+	        smallfont.drawCentered(foregroundColor, 0, -316 + font.height, 0.5, error);
 	        smallfont.flush();
 	      }
 	      font.flush();
@@ -2279,7 +2319,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.PlayState = exports.colors = undefined;
+	exports.PlayState = undefined;
 	
 	var _assetmgr = __webpack_require__(7);
 	
@@ -2289,79 +2329,38 @@
 	
 	var _keyboard = __webpack_require__(14);
 	
-	var _boat = __webpack_require__(15);
-	
-	var _player = __webpack_require__(17);
-	
-	var _tablet = __webpack_require__(18);
-	
-	var _begisland = __webpack_require__(19);
-	
-	var _mainland = __webpack_require__(20);
+	var _palette = __webpack_require__(15);
 	
 	var _box2dHtml = __webpack_require__(16);
 	
 	var box2d = _interopRequireWildcard(_box2dHtml);
 	
+	var _objects = __webpack_require__(17);
+	
+	var obj = _interopRequireWildcard(_objects);
+	
+	var _dialogue = __webpack_require__(24);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
-	var colors = exports.colors = {
-	  bg: (0, _gfxutils.Color)("#2698FC"),
-	  cloud: (0, _gfxutils.Color)(0.8, 0.8, 1, 1),
-	  fg: (0, _gfxutils.Color)(0.8, 0.8, 1, 1),
-	  dirt: (0, _gfxutils.Color)("#5E3F1B"),
-	  grass: (0, _gfxutils.Color)("#45A81E"),
-	  sun: (0, _gfxutils.Color)(1, 1, 0, 1),
-	  moon: (0, _gfxutils.Color)(0.8, 0.8, 0.8, 1),
-	  player: (0, _gfxutils.Color)(0.8, 0.8, 0.8, 1),
-	  houseBody: (0, _gfxutils.Color)(0.8, 0.7, 0.7, 1),
-	  houseRoof: (0, _gfxutils.Color)("#5E3F1B"),
-	  boatStake: (0, _gfxutils.Color)("#D99445"),
-	  rope: (0, _gfxutils.Color)("#F5C998"),
-	  dock: (0, _gfxutils.Color)("#806E3E"),
-	  water: _gfxutils.ColorUtils.multRGB((0, _gfxutils.Color)(0.8, 0.8, 1, 1), 0.2),
-	  stars: _gfxutils.ColorUtils.multRGB((0, _gfxutils.Color)(1, 0.8, 0.8, 1), 1)
+	var lerp = function lerp(a, b, x) {
+	  return a + x * (b - a);
 	};
 	
-	var Cloud = function Cloud() {
-	  var w = 125;
-	  var h = 65;
-	
-	  var self = {
-	    draw: function draw(shapes) {
-	      shapes.drawColoredRect(colors.cloud, -w / 2, -h / 2, w / 2, h / 2);
-	      var x = -w / 2;
-	      for (var i = 0; i < rects.length; i++) {
-	        shapes.drawColoredRect(colors.cloud, x - rects[i] / 2, -(h / 2) - rects[i] / 2, x + rects[i] / 2, -(h / 2) + rects[i] / 2);
-	        x += rects[i];
-	      }
-	    }
-	  };
-	  return self;
+	var modulo = function modulo(a, b) {
+	  return (a % b + b) % b;
 	};
 	
 	var PlayState = exports.PlayState = function PlayState(game, transition) {
 	  var _time = 0;
 	
+	  var objects = [];
+	
 	  var render = game.render;
 	  var shapesMaterial = render.createMaterial(_assetmgr.AssetManager.getAsset("base.shader.flat.color"), {
 	    matrix: render.pixelMatrix
 	  });
-	  var tabletMaterial = render.createMaterial(_assetmgr.AssetManager.getAsset("game.shader.tablet"), {
-	    matrix: render.pixelMatrix,
-	    time: function time() {
-	      return _time;
-	    }
-	  });
-	  var holoMaterial = render.createMaterial(_assetmgr.AssetManager.getAsset("game.shader.hologram"), {
-	    matrix: render.pixelMatrix,
-	    time: function time() {
-	      return _time;
-	    },
-	    pixwidth: render.fbwidth,
-	    pixheight: render.fbheight
-	  });
-	  var font = render.createFontRenderer(_assetmgr.AssetManager.getAsset("base.font.open_sans"), _assetmgr.AssetManager.getAsset("base.shader.flat.texcolor"));
+	  var font = render.createFontRenderer(_assetmgr.AssetManager.getAsset("base.font.coders_crux"), _assetmgr.AssetManager.getAsset("base.shader.flat.texcolor"));
 	  var fb = render.createFramebuffer(100); // 100 pixels of padding
 	  var postMatrix = _math.Mat4.create();
 	  var post = render.createMaterial(_assetmgr.AssetManager.getAsset("game.shader.reflection"), {
@@ -2377,369 +2376,158 @@
 	      return fb.ytoc(0);
 	    }
 	  });
+	  var dialogue = (0, _dialogue.DialogueInterpreter)();
+	  dialogue.loadTree(_assetmgr.AssetManager.getAsset("game.dialogue"));
+	
 	  var shapes = render.createShapeDrawer();
 	
 	  var opMatrix = _math.Mat4.create();
 	  var matStack = _math.Mat4Stack.create();
 	  var matrix = _math.Mat4.create();
-	
-	  var cloud = Cloud();
-	
-	  var camera = {
-	    x: 0,
-	    y: -300
-	  };
-	
-	  var _skyColor = (0, _gfxutils.Color)(0, 0, 0, 1);
-	  var _starColor = (0, _gfxutils.Color)(0, 0, 0, 1);
-	
-	  var stars = [];
-	  for (var i = 0; i < 1000; i++) {
-	    stars.push([Math.random(), Math.random()]);
-	  }
-	
-	  var lerp = function lerp(a, b, x) {
-	    return a + x * (b - a);
-	  };
-	
-	  var buoyancy = new box2d.b2BuoyancyController();
-	  buoyancy.normal.Set(0, -1);
-	  buoyancy.offset = 0;
-	  buoyancy.density = 3;
-	  buoyancy.linearDrag = 5;
-	  buoyancy.angularDrag = 2;
-	
-	  var objects = [];
-	  var holoObject = void 0;
-	  var inHologramMode = false;
-	
-	  var world = new box2d.b2World(new box2d.b2Vec2(0, 15));
-	
-	  var manager = {
-	    world: world,
-	    remove: function remove(object) {
-	      world.DestroyBody(object.body);
-	      object.body.SetActive(false);
-	      var idx = objects.indexOf(object);
-	      if (idx >= 0) {
-	        objects.splice(idx, 1);
-	      }
-	    }
-	  };
-	
-	  var island = (0, _begisland.BeginningIsland)(world);
-	  var mainland = (0, _mainland.Mainland)(world);
-	  var player = (0, _player.Player)(world, buoyancy);
-	  var tablet = (0, _tablet.Tablet)(manager, buoyancy, player, tabletMaterial);
-	  objects.push(island);
-	  objects.push((0, _begisland.BeginningHouse)(island, world));
-	  objects.push(player);
-	  objects.push((0, _boat.Boat)(world, buoyancy, player.body, true));
-	  objects.push(tablet);
-	  objects.push(mainland);
-	
-	  world.AddController(buoyancy);
-	  world.SetContactFilter({
-	    ShouldCollide: function ShouldCollide(a, b) {
-	      var objA = a.GetBody().GetUserData();
-	      var objB = b.GetBody().GetUserData();
-	      if (a.GetUserData() && a.GetUserData().noCollide || b.GetUserData() && b.GetUserData().noCollide) {
-	        return false;
-	      }
-	      if (objA && objA.isHologram) {
-	        return false;
-	      }
-	      if (objB && objB.isHologram) {
-	        return false;
-	      }
-	      if (objA && objB) {
-	        return objA.shouldCollide ? objA.shouldCollide(objB, a, b) : true && objB.shouldCollide ? objB.shouldCollide(objA, b, a) : true;
-	      } else {
-	        return true;
-	      }
-	    }
-	  });
-	  world.SetContactListener({
-	    BeginContact: function BeginContact(contact) {
-	      var a = contact.GetFixtureA();
-	      var b = contact.GetFixtureB();
-	      var aData = a.GetBody().GetUserData();
-	      var bData = b.GetBody().GetUserData();
-	      if (aData && aData.BeginContact) {
-	        aData.BeginContact(a, b);
-	      }
-	      if (bData && bData.BeginContact) {
-	        bData.BeginContact(b, a);
-	      }
-	    },
-	    EndContact: function EndContact(contact) {
-	      var a = contact.GetFixtureA();
-	      var b = contact.GetFixtureB();
-	      var aData = a.GetBody().GetUserData();
-	      var bData = b.GetBody().GetUserData();
-	      if (aData && aData.EndContact) {
-	        aData.EndContact(a, b);
-	      }
-	      if (bData && bData.EndContact) {
-	        bData.EndContact(b, a);
-	      }
-	    },
-	    PreSolve: function PreSolve(contact, manifold) {},
-	    PostSolve: function PostSolve(contact, impulse) {}
-	  });
-	
-	  var b2aabb = new box2d.b2AABB();
+	  shapes.useMatrix(matrix);
+	  shapes.useMaterial(shapesMaterial);
+	  font.useMatrix(matrix);
 	
 	  var kb = _keyboard.Keyboard.create();
-	  var binds = {
-	    left: kb.createKeybind("ArrowLeft", "a"),
-	    right: kb.createKeybind("ArrowRight", "d")
-	  };
+	  var uniformTimer = 0;
 	
-	  var b2timer = 0;
-	  var hoverQueryCallback = function hoverQueryCallback(fixture) {
-	    var object = fixture.GetBody().GetUserData();
-	    if (object) {
-	      object.hovering = true;
-	    }
-	    return true;
-	  };
+	  var snow = [];
+	  var snowAngle = -100 * 180.0 / (2 * Math.PI);
+	  var snowDepth = 0.1;
+	  for (var i = 0; i < 700; i++) {
+	    snow.push({ x: Math.random(), y: Math.random(), speed: Math.random() });
+	  }
 	
-	  var textColor = (0, _gfxutils.Color)(0., 0., 0., 0);
-	  var textState = 0;
-	  var textTimer = 6000;
-	  var lastHadTablet = false;
+	  var width = 1280;
+	  var height = 720;
 	
 	  var self = {
+	    game: game,
+	    font: font,
+	    debugMode: false,
+	    camera: {
+	      x: 0,
+	      y: 0,
+	      follow: null
+	    },
+	    binds: {
+	      left: kb.createKeybind("ArrowLeft", "a"),
+	      right: kb.createKeybind("ArrowRight", "d"),
+	      up: kb.createKeybind("ArrowUp", "w"),
+	      down: kb.createKeybind("ArrowDown", "s"),
+	      fasterText: kb.createKeybind("z"),
+	      nod: kb.createKeybind("x")
+	    },
+	    addObject: function addObject(obj) {
+	      obj.id = objects.length;
+	      objects.push(obj);
+	      if (obj.initialize) {
+	        obj.initialize(self);
+	      }
+	    },
 	    initialize: function initialize() {
-	      // simulate 2 seconds of physics to give time for stuff to settle
-	      for (var _i = 0; _i < 2000; _i += 5) {
-	        world.Step(5.0 / 1000.0, 8, 3);
-	      }
-	      for (var _i2 = 0; _i2 < objects.length; _i2++) {
-	        if (objects[_i2].isHologram) {
-	          objects[_i2].body.SetType(box2d.b2BodyType.b2_staticBody);
-	        }
-	      }
-	    },
-	    dayCycle: function dayCycle() {
-	      return _time / 180000.0;
-	    },
-	    moonPhase: function moonPhase() {
-	      return self.dayCycle() / 29.530588853 % 1;
-	    },
-	    skyColor: function skyColor() {
-	      var fac = Math.sin((self.dayCycle() + 0.25) * Math.PI * 2) / 2 + 0.5;
-	      fac += 0.1;
-	      fac = Math.min(fac, 1);
-	      _skyColor.r = colors.bg.r * fac;
-	      _skyColor.g = colors.bg.g * fac;
-	      _skyColor.b = colors.bg.b * fac;
-	      return _skyColor;
-	    },
-	    starColor: function starColor() {
-	      var fac = Math.sin((self.dayCycle() + 0.25) * Math.PI * 2) / 2 + 0.5;
-	      fac = 1 - fac; // 1 at night
-	      fac -= 0.5;
-	      fac *= 2;
-	      fac = Math.max(0, fac);
-	      _starColor.r = lerp(_skyColor.r, colors.stars.r, fac);
-	      _starColor.g = lerp(_skyColor.g, colors.stars.g, fac);
-	      _starColor.b = lerp(_skyColor.b, colors.stars.b, fac);
-	      //starColor = colors.stars;
+	      console.log("initialize play state");
+	      //self.addObject(obj.Office());
+	      self.addObject(self.textBox = obj.TextBox());
+	      dialogue.linkTextbox(self.textBox);
+	      dialogue.begin("andrea.entry");
 	    },
 	    drawScene: function drawScene() {
-	      render.clear(self.skyColor());
-	      matStack.push(matrix);
+	      render.clearBuffers();
+	      render.clear(_gfxutils.Colors.BLACK);
+	      matrix.load.identity();
 	
-	      opMatrix.load.translate(render.width() / 2, render.height(), 0);
+	      var factor = Math.min(render.width() / width, render.height() / height);
+	      var tgtW = width * factor;
+	      var tgtH = height * factor;
+	      opMatrix.load.translate((render.width() - tgtW) / 2, (render.height() - tgtH) / 2, 0);
+	      matrix.multiply(opMatrix);
+	      opMatrix.load.scale(factor, factor, 1);
 	      matrix.multiply(opMatrix);
 	
-	      matStack.push(matrix);
-	      opMatrix.load.translate(camera.x, camera.y, 0);
-	      matrix.multiply(opMatrix);
+	      render.drawStencil();
+	      shapes.drawColoredRect(_gfxutils.Colors.WHITE, 0, 0, width, height, 0.5);
+	      shapes.flush();
+	      render.drawColor();
+	      render.setStencil(true);
 	
-	      self.starColor();
-	      for (var _i3 = 0; _i3 < stars.length; _i3++) {
-	        var star = stars[_i3];
-	        shapes.drawColoredRect(_starColor, render.width() * star[0] - 1.0 - render.width() / 2, -render.height() * star[1] - 1.0, render.width() * star[0] + 1.0 - render.width() / 2, -render.height() * star[1] + 1.0);
+	      shapes.drawColoredRect(_palette.colors.bg, 0, 0, width, height, 0);
+	
+	      for (var _i = 0; _i < snow.length; _i++) {
+	        var sz = lerp(1.5, 2.5, snow[_i].speed);
+	        shapes.drawColoredRect(_palette.colors.snow, modulo(snow[_i].x * width - self.camera.x, width), modulo(snow[_i].y * height - self.camera.y, height), modulo(snow[_i].x * width - self.camera.x, width) + sz, modulo(snow[_i].y * height - self.camera.y, height) + sz, snowDepth);
 	      }
-	      matStack.pop(matrix);
 	
-	      opMatrix.load.scale(40, 40, 1); // 1 game unit = 40 pixels
-	      matrix.multiply(opMatrix);
+	      //      opMatrix.load.translate(Math.floor(width/2), Math.floor(height/2), 0);
+	      //      matrix.multiply(opMatrix);
 	
-	      matStack.push(matrix); // cancel out camera movement
-	      opMatrix.load.translate(camera.x / 40.0, camera.y / 40.0, 0);
-	      matrix.multiply(opMatrix);
-	
-	      matStack.push(matrix);
-	      opMatrix.load.rotate(self.dayCycle() * Math.PI * 2);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.translate(0, -11.25, 0);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.rotate(-self.dayCycle() * Math.PI * 2);
-	      matrix.multiply(opMatrix);
-	      self.drawSun();
-	      matStack.pop(matrix);
-	
-	      matStack.push(matrix);
-	      opMatrix.load.rotate(self.dayCycle() * Math.PI * 2);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.translate(0, 11.25, 0);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.rotate(-self.dayCycle() * Math.PI * 2);
-	      matrix.multiply(opMatrix);
-	
-	      var phase = self.moonPhase();
-	      if (phase < .25) {
-	        self.drawArc(_skyColor, .5, -3 * Math.PI / 2, -Math.PI / 2);
-	        self.drawArc(colors.moon, .5, -Math.PI / 2, Math.PI / 2);
-	        opMatrix.load.scale((.25 - phase) * 4, 1, 1);
-	        matrix.multiply(opMatrix);
-	        self.drawArc(_skyColor, .5, 0, Math.PI * 2);
-	      } else if (phase < .5) {
-	        self.drawArc(_skyColor, .5, -3 * Math.PI / 2, -Math.PI / 2);
-	        self.drawArc(colors.moon, .5, -Math.PI / 2, Math.PI / 2);
-	        opMatrix.load.scale((phase - .25) * 4, 1, 1);
-	        matrix.multiply(opMatrix);
-	        self.drawArc(colors.moon, .5, 0, Math.PI * 2);
-	      } else if (phase < .75) {
-	        phase -= .5;
-	        self.drawArc(colors.moon, .5, -3 * Math.PI / 2, -Math.PI / 2);
-	        self.drawArc(_skyColor, .5, -Math.PI / 2, Math.PI / 2);
-	        opMatrix.load.scale((.75 - phase - .5) * 4, 1, 1);
-	        matrix.multiply(opMatrix);
-	        self.drawArc(colors.moon, .5, 0, Math.PI * 2);
-	      } else {
-	        self.drawArc(colors.moon, .5, -3 * Math.PI / 2, -Math.PI / 2);
-	        self.drawArc(_skyColor, .5, -Math.PI / 2, Math.PI / 2);
-	        opMatrix.load.scale((phase - .75) * 4, 1, 1);
-	        matrix.multiply(opMatrix);
-	        self.drawArc(_skyColor, .5, 0, Math.PI * 2);
-	      }
-	      matStack.pop(matrix); // pop moon matrix
-	      matStack.pop(matrix); // pop celestial matrix
-	
-	      for (var _i4 = 0; _i4 < objects.length; _i4++) {
-	        var body = objects[_i4].body;
+	      for (var _i2 = 0; _i2 < objects.length; _i2++) {
 	        matStack.push(matrix);
-	        opMatrix.load.translate(body.GetPosition().x, body.GetPosition().y, 0);
-	        matrix.multiply(opMatrix);
-	        opMatrix.load.rotate(body.GetAngleRadians());
-	        matrix.multiply(opMatrix);
-	        if (inHologramMode || !objects[_i4].isHologram) {
-	          if (objects[_i4].isHologram) {
-	            shapes.useMaterial(holoMaterial);
-	            if (objects[_i4].hovering) {
-	              opMatrix.load.scale(1.1, 1.1, 1);
-	              matrix.multiply(opMatrix);
-	              if (game.mouse.justClicked()) {
-	                if (holoObject) {
-	                  holoObject.isHologram = true;
-	                  holoObject.body.SetType(box2d.b2BodyType.b2_staticBody);
-	                }
-	                holoObject = objects[_i4];
-	                holoObject.body.SetType(holoObject.isDynamic ? box2d.b2BodyType.b2_dynamicBody : box2d.b2BodyType.b2_staticBody);
-	                holoObject.isHologram = false;
-	              }
-	            }
-	          }
-	          objects[_i4].draw(shapes);
-	        }
-	        shapes.useMaterial(shapesMaterial);
+	        self.drawObject(objects[_i2]);
 	        matStack.pop(matrix);
 	      }
 	
-	      opMatrix.load.scale(1.0 / 40, 1.0 / 40, 1);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.translate(camera.x, camera.y, 0);
-	      matrix.multiply(opMatrix);
-	      font.useMatrix(matrix);
-	      font.drawCentered(textColor, -200, -300, "Attached is a note:");
-	      font.drawCentered(textColor, -200, -270, "Encoded within this tablet is a complete snapshot");
-	      font.drawCentered(textColor, -200, -240, "of the world before its impending doom. We hope that");
-	      font.drawCentered(textColor, -200, -210, "someone will manage to find this and lay the foundation");
-	      font.drawCentered(textColor, -200, -180, "for a brand new world.");
-	      font.flush();
+	      shapes.flush();
 	
-	      matStack.pop(matrix);
+	      //      render.setStencil(false);
 	    },
-	    drawBody: function drawBody(body, cb) {
-	      matStack.push(matrix);
-	      opMatrix.load.translate(body.GetPosition().x, body.GetPosition().y, 0);
-	      matrix.multiply(opMatrix);
-	      opMatrix.load.rotate(body.GetAngleRadians());
-	      matrix.multiply(opMatrix);
-	      cb();
-	      matStack.pop(matrix);
+	    debugInfo: function debugInfo(object) {
+	      var info = [];
+	      info.push("(" + object.x + ", " + object.y + ") " + object.type + " #" + object.id);
+	      info.push("parallax: " + object.parallax);
+	      return info;
 	    },
-	    drawSun: function drawSun() {
-	      matStack.push(matrix);
-	      var segments = 3;
-	      for (var _i5 = 0; _i5 < segments; _i5++) {
-	        shapes.drawColoredRect(colors.sun, -.75, -.75, .75, .75);
-	        opMatrix.load.rotate(Math.PI / (2 * segments));
-	        matrix.multiply(opMatrix);
+	    drawDebugInfoBox: function drawDebugInfoBox(info) {
+	      var y = 0;
+	      for (var _i3 = 0; _i3 < info.length; _i3++) {
+	        shapes.drawColoredRect(_palette.colors.debugBox, 0, y, font.computeWidth(info[_i3]), font.height + y, 0.999);
+	        font.draw(_gfxutils.Colors.WHITE, 0, y, 1, info[_i3]);
+	        y += font.height;
 	      }
-	      matStack.pop(matrix);
 	    },
-	    drawArc: function drawArc(color, rad, beg, end) {
+	    drawObject: function drawObject(object) {
+	      var parallax = object.parallax;
+	      if (parallax == undefined) {
+	        parallax = 1;
+	      }
+	      opMatrix.load.translateFloor(-self.camera.x * parallax, -self.camera.y * parallax, 0);
+	      matrix.multiply(opMatrix);
+	      opMatrix.load.translate(object.x, object.y, 0);
+	      matrix.multiply(opMatrix);
 	      matStack.push(matrix);
-	      var segments = 40.0;
-	      var x = rad * Math.cos(beg);
-	      var y = rad * Math.sin(beg);
-	      for (var angle = beg; angle <= end; angle += Math.PI / 20.0) {
-	        if (angle > end) {
-	          angle = end;
+	      object.draw(shapes, font, matrix, opMatrix);
+	      matStack.pop(matrix);
+	
+	      if (self.debugMode && !object.noDebug) {
+	        shapes.drawColoredRect(_gfxutils.Colors.RED, 0, 0, 2, object.h, 0.999);
+	        shapes.drawColoredRect(_gfxutils.Colors.RED, 0, 0, object.w, 2, 0.999);
+	        shapes.drawColoredRect(_gfxutils.Colors.RED, object.w, 0, object.w - 2, object.h, 0.999);
+	        shapes.drawColoredRect(_gfxutils.Colors.RED, 0, object.h - 2, object.w, object.h, 0.999);
+	
+	        var info = self.debugInfo(object);
+	        self.drawDebugInfoBox(info);
+	      }
+	      shapes.flush();
+	      font.flush();
+	    },
+	    step: function step() {
+	      for (var _i4 = 0; _i4 < snow.length; _i4++) {
+	        snow[_i4].x += lerp(0.0001, 0.0008, snow[_i4].speed) * Math.sin(snowAngle + Math.sin(_time / 1000.0) * lerp(0.7, 1, snow[_i4].speed) / 6.0);
+	        snow[_i4].y += lerp(0.0001, 0.0008, snow[_i4].speed) * Math.cos(snowAngle + Math.sin(_time / 1000.0) * lerp(0.7, 1, snow[_i4].speed) / 6.0);
+	        snow[_i4].x %= 1;
+	        snow[_i4].y %= 1;
+	      }
+	      for (var _i5 = 0; _i5 < objects.length; _i5++) {
+	        if (objects[_i5].step) {
+	          objects[_i5].step();
 	        }
-	        var x2 = rad * Math.cos(angle);
-	        var y2 = rad * Math.sin(angle);
-	        shapes.drawColoredTriangle(color, x, y, 0, 0, x2, y2);
-	        x = x2;
-	        y = y2;
 	      }
-	      matStack.pop(matrix);
 	    },
 	    tick: function tick(delta) {
-	      b2timer += delta;
-	      while (b2timer > 5) {
-	        world.Step(5.0 / 1000.0, 8, 3);
-	        b2timer -= 5;
-	      }
-	
-	      camera.x = player.body.GetPosition().x * 40;
-	      camera.y = player.body.GetPosition().y * 40;
-	
-	      if (binds.right.isPressed()) {
-	        player.body.SetAngularVelocity(2);
-	      }
-	
-	      if (binds.left.isPressed()) {
-	        player.body.SetAngularVelocity(-2);
-	      }
-	
-	      if (textState == 1) {
-	        textColor.a += delta / 1000.0;
-	        if (textColor.a >= 1) {
-	          textState = 2;
-	          textColor.a = 1;
-	        }
-	      }
-	      if (textState == 2) {
-	        textTimer -= delta;
-	        if (textTimer <= 0) {
-	          textState = 3;
-	        }
-	      }
-	      if (textState == 3) {
-	        if (textColor.a > 0) {
-	          textColor.a -= delta / 1000.0;
-	        }
-	        if (textColor.a <= 0) {
-	          textState = 0;
-	          textColor.a = 0;
-	        }
+	      uniformTimer += delta;
+	      while (uniformTimer > 5) {
+	        self.step();
+	        uniformTimer -= 5;
 	      }
 	
 	      for (var _i6 = 0; _i6 < objects.length; _i6++) {
@@ -2748,64 +2536,16 @@
 	        }
 	      }
 	
-	      matStack.reset();
-	      matrix.load.identity();
-	
-	      shapes.useMatrix(matrix);
-	      shapes.useMaterial(shapesMaterial);
-	
-	      fb.bind();
-	      matStack.push(matrix);
-	      opMatrix.load.translate(-camera.x, 0, 0);
-	      matrix.multiply(opMatrix);
-	      self.drawScene();
-	      shapes.flush();
-	      matStack.pop(matrix);
-	      fb.unbind();
-	
-	      opMatrix.load.translate(-camera.x, -render.height() / 2 - camera.y, 0);
-	      matrix.multiply(opMatrix);
-	      self.drawScene();
-	      shapes.flush();
-	
-	      postMatrix.load.from(render.pixelMatrix);
-	      opMatrix.load.translate(0, render.height() + render.height() / 2 - camera.y, 0);
-	      postMatrix.multiply(opMatrix);
-	      opMatrix.load.scale(1, -1, 1);
-	      postMatrix.multiply(opMatrix);
-	
-	      post.drawQuad(fb.getAttributes());
-	      post.flush();
-	
-	      matrix.load.identity();
-	      opMatrix.load.translate(35, 30, 0);
-	      matrix.multiply(opMatrix);
-	
-	      if (tablet.isCollected()) {
-	        if (!lastHadTablet) {
-	          lastHadTablet = true;
-	          textState = 1;
-	        }
-	        var tabletHover = game.mouse.x > 35 - 0.9 * 30 && game.mouse.y > 30 - 0.7 * 30 && game.mouse.x < 35 + 0.9 * 30 && game.mouse.y < 30 + 0.7 * 30;
-	
-	        opMatrix.load.scale(tabletHover ? 75 : 60, tabletHover ? 75 : 60, 1);
-	        matrix.multiply(opMatrix);
-	
-	        shapes.useMatrix(matrix);
-	        tablet.draw(shapes);
-	        shapes.flush();
-	
-	        if (tabletHover && game.mouse.justClicked()) {
-	          inHologramMode = !inHologramMode;
-	        }
+	      if (self.camera.follow) {
+	        self.camera.x = self.camera.follow.x;
+	        self.camera.y = self.camera.follow.y;
 	      }
 	
-	      for (var _i7 = 0; _i7 < objects.length; _i7++) {
-	        objects[_i7].hovering = false;
-	      }
-	      b2aabb.lowerBound.Set((game.mouse.x - render.width() / 2 + camera.x - 1) / 40.0, (game.mouse.y - render.height() / 2 + camera.y - 1) / 40.0);
-	      b2aabb.upperBound.Set((game.mouse.x - render.width() / 2 + camera.x + 1) / 40.0, (game.mouse.y - render.height() / 2 + camera.y + 1) / 40.0);
-	      world.QueryAABB(hoverQueryCallback, b2aabb);
+	      self.drawScene();
+	      matrix.load.identity();
+	      self.drawDebugInfoBox(["camera: (" + self.camera.x + ", " + self.camera.y + ")", "camera follow: " + (self.camera.follow ? "#" + self.camera.follow.id : "null")]);
+	      shapes.flush();
+	      font.flush();
 	
 	      transition.draw(delta);
 	      _time += delta;
@@ -2922,88 +2662,22 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Boat = undefined;
+	exports.colors = undefined;
 	
 	var _gfxutils = __webpack_require__(10);
 	
-	var _box2dHtml = __webpack_require__(16);
-	
-	var box2d = _interopRequireWildcard(_box2dHtml);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	var color = (0, _gfxutils.Color)("#D99445");
-	
-	var Boat = exports.Boat = function Boat(world, buoyancy, player, isHologram) {
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.type = box2d.b2BodyType.b2_dynamicBody;
-	  bodyDef.position.Set(12, -1);
-	  var body = world.CreateBody(bodyDef);
-	  var shape = new box2d.b2PolygonShape();
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  fixtureDef.density = 0.1;
-	  fixtureDef.friction = 0.2;
-	  fixtureDef.filter.maskBits = 2;
-	  fixtureDef.shape = shape;
-	  shape.Set([new box2d.b2Vec2(-2.5, -.75), new box2d.b2Vec2(-2.3, -.75), new box2d.b2Vec2(-2.3, .5), new box2d.b2Vec2(-2.5, .5)], 4);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([// right side
-	  new box2d.b2Vec2(2.3, .5), new box2d.b2Vec2(2.3, -.75), new box2d.b2Vec2(3.5, -.75), new box2d.b2Vec2(2.5, .75)], 4);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(-2.5, .75), new box2d.b2Vec2(-2.5, .5), new box2d.b2Vec2(2.5, .5), new box2d.b2Vec2(2.5, .75)], 4);
-	  body.CreateFixture(fixtureDef);
-	  fixtureDef.density = 10;
-	  shape.Set([new box2d.b2Vec2(-.5, 10), new box2d.b2Vec2(.5, 10), new box2d.b2Vec2(.5, 11), new box2d.b2Vec2(-.5, 10)], 4);
-	  body.CreateFixture(fixtureDef);
-	  fixtureDef.density = 0;
-	  shape.Set([new box2d.b2Vec2(-2.3, .5), new box2d.b2Vec2(2.3, .5), new box2d.b2Vec2(2.3, .4), new box2d.b2Vec2(-2.3, .4)], 4);
-	  fixtureDef.isSensor = true;
-	  var sensor = body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(-2.3, -.75), new box2d.b2Vec2(2.3, -.75), new box2d.b2Vec2(2.3, .5), new box2d.b2Vec2(-2.3, .5)], 4);
-	  fixtureDef.isSensor = false;
-	  var area = body.CreateFixture(fixtureDef);
-	  var noCollide = {
-	    noCollide: true
-	  };
-	  area.SetUserData(noCollide);
-	
-	  buoyancy.AddBody(body);
-	
-	  var riding = false;
-	  var force = new box2d.b2Vec2(200, 0);
-	  var hitWall = false;
-	
-	  var self = {
-	    body: body,
-	    isHologram: isHologram,
-	    isDynamic: true,
-	    BeginContact: function BeginContact(a, b) {
-	      if (a == sensor && b.GetBody() == player) {
-	        riding = true;
-	      }
-	      if (b.GetUserData() && b.GetUserData().stopsBoats) {
-	        hitWall = true;
-	        force.x = 50;
-	        console.log("stopping boat");
-	      }
-	    },
-	    EndContact: function EndContact(a, b) {
-	      if (a == sensor && b.GetBody() == player) {
-	        riding = false;
-	      }
-	    },
-	    draw: function draw(shapes) {
-	      shapes.drawColoredRect(color, -2.5, -.75, 2.5, .75, 0.5);
-	      shapes.drawColoredTriangle(color, 3.5, -.75, 2.5, -.75, 2.5, .75, 0.5);
-	    },
-	    tick: function tick() {
-	      if (riding) {
-	        body.ApplyForce(force, body.GetPosition());
-	      }
-	    }
-	  };
-	  body.SetUserData(self);
-	  return self;
+	var colors = exports.colors = {
+	  bg: (0, _gfxutils.Color)(0.1, 0.05, 0.1, 1),
+	  debugBox: (0, _gfxutils.Color)(0, 0, 0, 0.5),
+	  snow: _gfxutils.Colors.WHITE,
+	  bgWall: {
+	    stripeA: (0, _gfxutils.Color)(0.04, 0.04, 0.04, 1),
+	    stripeB: (0, _gfxutils.Color)(0.07, 0.07, 0.08, 1)
+	  },
+	  carpet: (0, _gfxutils.Color)("#171513"),
+	  window: _gfxutils.ColorUtils.pma((0, _gfxutils.Color)(0.4, 0.4, 0.5, 0.2)),
+	  trim: (0, _gfxutils.Color)(0.75, 0.75, 0.75, 1),
+	  trimShadow: (0, _gfxutils.Color)(0.2, 0.2, 0.2, 1)
 	};
 
 /***/ },
@@ -3033,41 +2707,78 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Player = undefined;
 	
-	var _play = __webpack_require__(13);
+	var _player = __webpack_require__(18);
 	
-	var _box2dHtml = __webpack_require__(16);
-	
-	var box2d = _interopRequireWildcard(_box2dHtml);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	var Player = exports.Player = function Player(world, buoyancy) {
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.type = box2d.b2BodyType.b2_dynamicBody;
-	  bodyDef.position.Set(0, -10);
-	  var body = world.CreateBody(bodyDef);
-	  var shape = new box2d.b2PolygonShape();
-	  shape.SetAsBox(1, 1);
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  fixtureDef.shape = shape;
-	  fixtureDef.density = 1;
-	  fixtureDef.friction = 0.7;
-	  fixtureDef.filter.categoryBits = 63;
-	  body.CreateFixture(fixtureDef);
-	  buoyancy.AddBody(body);
-	
-	  var self = {
-	    body: body,
-	    isHologram: false,
-	    draw: function draw(shapes) {
-	      shapes.drawColoredRect(_play.colors.player, -1, -1, 1, 1, 0.5);
+	Object.keys(_player).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _player[key];
 	    }
-	  };
-	  body.SetUserData(self);
-	  return self;
-	};
+	  });
+	});
+	
+	var _debugMarker = __webpack_require__(19);
+	
+	Object.keys(_debugMarker).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _debugMarker[key];
+	    }
+	  });
+	});
+	
+	var _ground = __webpack_require__(20);
+	
+	Object.keys(_ground).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _ground[key];
+	    }
+	  });
+	});
+	
+	var _train = __webpack_require__(21);
+	
+	Object.keys(_train).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _train[key];
+	    }
+	  });
+	});
+	
+	var _office = __webpack_require__(22);
+	
+	Object.keys(_office).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _office[key];
+	    }
+	  });
+	});
+	
+	var _textbox = __webpack_require__(23);
+	
+	Object.keys(_textbox).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _textbox[key];
+	    }
+	  });
+	});
 
 /***/ },
 /* 18 */
@@ -3078,55 +2789,44 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Tablet = undefined;
+	exports.Player = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
 	
 	var _gfxutils = __webpack_require__(10);
 	
-	var _box2dHtml = __webpack_require__(16);
+	var _math = __webpack_require__(8);
 	
-	var box2d = _interopRequireWildcard(_box2dHtml);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	var Tablet = exports.Tablet = function Tablet(manager, buoyancy, player, mat) {
-	  var size = {
-	    w: 0.9,
-	    h: 0.7
-	  };
-	
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.type = box2d.b2BodyType.b2_dynamicBody;
-	  bodyDef.position.Set(-10, -10);
-	  var body = manager.world.CreateBody(bodyDef);
-	  var shape = new box2d.b2PolygonShape();
-	  shape.SetAsBox(size.w / 2, size.h / 2);
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  fixtureDef.shape = shape;
-	  fixtureDef.density = 1;
-	  fixtureDef.friction = 0.7;
-	  fixtureDef.filter.categoryBits = 63;
-	  body.CreateFixture(fixtureDef);
-	  buoyancy.AddBody(body);
-	
-	  var collected = false;
-	
+	var Player = exports.Player = function Player() {
 	  var self = {
-	    body: body,
+	    initialize: function initialize(state) {
+	      self.state = state;
+	    },
+	
+	    x: 100,
+	    y: -100,
+	    w: 30,
+	    h: 30,
+	    parallax: 1,
+	    type: "Player",
 	    draw: function draw(shapes) {
-	      shapes.useMaterial(mat);
-	      shapes.drawTexturedRect(-size.w / 2, -size.h / 2, size.w / 2, size.h / 2, 0, 0, 1, 1, 0.55);
+	      shapes.drawColoredRect(_gfxutils.Colors.WHITE, 0, 0, self.w, self.h, 0.5);
 	    },
-	    BeginContact: function BeginContact(a, b) {
-	      if (b.GetBody() == player.body) {
-	        manager.remove(self);
-	        collected = true;
+	    step: function step() {
+	      if (self.state.binds.left.isPressed()) {
+	        self.x -= 2;
 	      }
-	    },
-	    isCollected: function isCollected() {
-	      return collected;
+	      if (self.state.binds.right.isPressed()) {
+	        self.x += 2;
+	      }
+	      if (self.state.binds.up.isPressed()) {
+	        self.y -= 2;
+	      }
+	      if (self.state.binds.down.isPressed()) {
+	        self.y += 2;
+	      }
 	    }
 	  };
-	  body.SetUserData(self);
 	  return self;
 	};
 
@@ -3139,85 +2839,38 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.BeginningHouse = exports.BeginningIsland = undefined;
+	exports.DebugMarker = undefined;
 	
-	var _play = __webpack_require__(13);
+	var _assetmgr = __webpack_require__(7);
 	
-	var _box2dHtml = __webpack_require__(16);
+	var _gfxutils = __webpack_require__(10);
 	
-	var box2d = _interopRequireWildcard(_box2dHtml);
+	var _math = __webpack_require__(8);
 	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	var _palette = __webpack_require__(15);
 	
-	var BeginningIsland = exports.BeginningIsland = function BeginningIsland(world) {
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.position.Set(0, 0);
-	  var body = world.CreateBody(bodyDef);
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  var shape = new box2d.b2PolygonShape();
-	  fixtureDef.shape = shape;
-	  fixtureDef.friction = 0.3;
-	  fixtureDef.filter.categoryBits = 3;
-	  fixtureDef.filter.maskBits = 255;
-	  shape.Set([new box2d.b2Vec2(5, 1.75), new box2d.b2Vec2(-5, 1.75), new box2d.b2Vec2(-5, -1.25), new box2d.b2Vec2(5, -1.25)], 4);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(-5, -1.25), new box2d.b2Vec2(-10, .25), new box2d.b2Vec2(-5, .25)], 3);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(-10, .25), new box2d.b2Vec2(-27, 2.25), new box2d.b2Vec2(-10, 2.25)], 3);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(5, -1.25), new box2d.b2Vec2(10, .25), new box2d.b2Vec2(5, .25)], 3);
-	  body.CreateFixture(fixtureDef);
-	  fixtureDef.filter.categoryBits = 1;
-	  shape.Set([new box2d.b2Vec2(5, -.3), new box2d.b2Vec2(10, -.3), new box2d.b2Vec2(10, -.7), new box2d.b2Vec2(5, -.7)], 4);
-	  body.CreateFixture(fixtureDef);
-	
+	var DebugMarker = exports.DebugMarker = function DebugMarker(x, y, parallax) {
+	  if (parallax == undefined) {
+	    parallax = 1;
+	  }
 	  var self = {
-	    body: body,
-	    isHologram: false,
-	    draw: function draw(shapes) {
-	      var z = 0.6;
-	      shapes.drawColoredRect(_play.colors.dock, 5, -.3, 15, -.7, z);
-	      shapes.drawColoredRect(_play.colors.dock, 14, -.7, 14.4, .5, z);
-	
-	      shapes.drawColoredRect(_play.colors.dirt, -5, -1.25, 5, .25, z);
-	      shapes.drawColoredRect(_play.colors.boatStake, 7.5, 0, 8, -2, z);
-	      shapes.drawColoredRect(_play.colors.rope, 7.45, -1.4, 8.05, -1.9, z);
-	      shapes.drawColoredTriangle(_play.colors.grass, -5, -1.25, -10, .25, -5, .25, z);
-	      shapes.drawColoredTriangle(_play.colors.dirt, -5, -1, -10, .5, -5, .5, z);
-	      shapes.drawColoredTriangle(_play.colors.grass, 5, -1.25, 10, .25, 5, .25, z);
-	      shapes.drawColoredTriangle(_play.colors.dirt, 5, -1, 10, .5, 5, .5, z);
-	      shapes.drawColoredRect(_play.colors.grass, -5, -1.25, 5, -1, z);
-	    }
-	  };
-	  body.SetUserData(self);
-	  return self;
-	};
-	
-	var BeginningHouse = exports.BeginningHouse = function BeginningHouse(island, world) {
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.position.Set(-2, -1.25);
-	  var body = world.CreateBody(bodyDef);
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  var shape = new box2d.b2PolygonShape();
-	  fixtureDef.shape = shape;
-	  shape.Set([new box2d.b2Vec2(-2, -3.75), new box2d.b2Vec2(-2, 0), new box2d.b2Vec2(2, 0), new box2d.b2Vec2(2, -3.75)], 4);
-	  body.CreateFixture(fixtureDef);
-	  shape.Set([new box2d.b2Vec2(-2.5, -3.75), new box2d.b2Vec2(2.5, -3.75), new box2d.b2Vec2(0, -5.75)], 3);
-	  body.CreateFixture(fixtureDef);
-	
-	  var self = {
-	    body: body,
-	    isHologram: true,
-	    draw: function draw(shapes) {
-	      var z = 0.4;
-	      shapes.drawColoredRect(_play.colors.houseBody, -2, -3.75, 2, 0, z);
-	      shapes.drawColoredTriangle(_play.colors.houseRoof, -2.5, -3.75, 2.5, -3.75, 0, -5.75, z);
+	    initialize: function initialize(state) {
+	      self.state = state;
 	    },
-	    shouldCollide: function shouldCollide(a, b, c) {
-	      return false;
+	
+	    x: x,
+	    y: y,
+	    parallax: parallax,
+	    w: 0,
+	    h: 0,
+	    noDebug: true,
+	    type: "debug marker",
+	    draw: function draw(shapes) {
+	      shapes.drawColoredRect(_palette.colors.debugBox, -1, -10, 1, 10, 1);
+	      shapes.drawColoredRect(_palette.colors.debugBox, -10, -1, 10, 1, 1);
+	      self.state.drawDebugInfoBox(["(" + x + ", " + y + ") parallax " + parallax]);
 	    }
 	  };
-	  body.SetUserData(self);
 	  return self;
 	};
 
@@ -3230,44 +2883,405 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Mainland = undefined;
+	exports.Ground = undefined;
 	
-	var _play = __webpack_require__(13);
+	var _assetmgr = __webpack_require__(7);
 	
-	var _box2dHtml = __webpack_require__(16);
+	var _gfxutils = __webpack_require__(10);
 	
-	var box2d = _interopRequireWildcard(_box2dHtml);
+	var _math = __webpack_require__(8);
 	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	var _palette = __webpack_require__(15);
 	
-	var Mainland = exports.Mainland = function Mainland(world) {
-	  var bodyDef = new box2d.b2BodyDef();
-	  bodyDef.position.Set(60, 0);
-	  var body = world.CreateBody(bodyDef);
-	  var fixtureDef = new box2d.b2FixtureDef();
-	  var shape = new box2d.b2PolygonShape();
-	  fixtureDef.shape = shape;
-	  fixtureDef.friction = 0.6;
-	  shape.Set([// left edge
-	  new box2d.b2Vec2(-5, -1.25), new box2d.b2Vec2(-5, .25), new box2d.b2Vec2(-10, .25), new box2d.b2Vec2(-10, 10), new box2d.b2Vec2(-5, 10)], 3);
-	  var fix = body.CreateFixture(fixtureDef);
-	  fix.SetUserData({ stopsBoats: true });
-	
+	var Ground = exports.Ground = function Ground() {
 	  var self = {
-	    body: body,
-	    isHologram: false,
+	    initialize: function initialize(state) {
+	      self.state = state;
+	    },
+	
+	    x: 0,
+	    y: 0,
+	    w: 3000,
+	    h: 1000,
+	    noDebug: true,
+	    parallax: 1,
+	    type: "ground",
 	    draw: function draw(shapes) {
-	      var z = 0.6;
-	      shapes.drawColoredTriangle(_play.colors.grass, -5, -1.25, -10, .25, -5, .25, z);
-	      shapes.drawColoredTriangle(_play.colors.dirt, -5, -1, -10, .5, -5, .5, z);
+	      shapes.drawColoredRect(_gfxutils.Colors.WHITE, -self.w / 2, 0, self.w / 2, 30, 0.2);
+	      shapes.drawColoredRect(_palette.colors.ground, -self.w / 2, 30, self.w / 2, self.h, 0.2);
 	    }
 	  };
-	  body.SetUserData(self);
 	  return self;
 	};
 
 /***/ },
 /* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.Train = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	var _gfxutils = __webpack_require__(10);
+	
+	var _math = __webpack_require__(8);
+	
+	var _palette = __webpack_require__(15);
+	
+	var Train = exports.Train = function Train() {
+	  var self = {
+	    initialize: function initialize(state) {
+	      self.state = state;
+	    },
+	
+	    x: -100,
+	    y: -200,
+	    w: 500,
+	    h: 200,
+	    parallax: 1,
+	    type: "train",
+	    draw: function draw(shapes) {
+	      shapes.drawColoredRect(_palette.colors.trainBody, 0, 0, 500, 180, 0.1);
+	    }
+	  };
+	  return self;
+	};
+
+/***/ },
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.Office = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	var _gfxutils = __webpack_require__(10);
+	
+	var _math = __webpack_require__(8);
+	
+	var _palette = __webpack_require__(15);
+	
+	var Office = exports.Office = function Office() {
+	  var drawStriped = function drawStriped(shapes, x1, y1, x2, y2) {
+	    var stripeWidth = 10;
+	    var gradient = x1 % (stripeWidth * 2);
+	
+	    var stripe = gradient < stripeWidth;
+	
+	    shapes.drawColoredRect(stripe ? _palette.colors.bgWall.stripeA : _palette.colors.bgWall.stripeB, x1, y1, x1 + stripeWidth - gradient / 2, y2, 0);
+	
+	    for (var x = x1 + stripeWidth - gradient / 2; x < x2; x += stripeWidth) {
+	      stripe = !stripe;
+	      shapes.drawColoredRect(stripe ? _palette.colors.bgWall.stripeA : _palette.colors.bgWall.stripeB, x, y1, Math.min(x + stripeWidth, x2), y2, 0.9);
+	    }
+	  };
+	
+	  var self = {
+	    initialize: function initialize(state) {
+	      self.state = state;
+	    },
+	
+	    x: -640,
+	    y: -360,
+	    w: 1280,
+	    h: 720,
+	    parallax: 1,
+	    type: "office",
+	    draw: function draw(shapes) {
+	      drawStriped(shapes, 0, 0, 100, 720);
+	      drawStriped(shapes, 680, 0, 1280, 720);
+	      drawStriped(shapes, 100, 0, 680, 160);
+	      drawStriped(shapes, 100, 590, 680, 720);
+	
+	      shapes.drawColoredRect(_palette.colors.window, 100, 160, 680, 590, 0);
+	      shapes.drawColoredRect(_palette.colors.trim, 75, 137, 705, 160, 0);
+	      shapes.drawColoredRect(_palette.colors.trimShadow, 75, 157, 705, 160, 0);
+	      shapes.drawColoredRect(_palette.colors.trim, 100, 160, 75, 590, 0);
+	
+	      shapes.drawColoredRect(_palette.colors.carpet, 0, 640, 1280, 720, 0); // carpet
+	    }
+	  };
+	  return self;
+	};
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.TextBox = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	var _gfxutils = __webpack_require__(10);
+	
+	var _math = __webpack_require__(8);
+	
+	var _palette = __webpack_require__(15);
+	
+	var TextBox = exports.TextBox = function TextBox() {
+	  var font = void 0;
+	  var self = {
+	    x: 50,
+	    y: 470,
+	    w: 1180,
+	    h: 200,
+	    parallax: 0,
+	    type: "textbox",
+	    displayCutoff: 0,
+	    characterAdvanceTimer: 0,
+	    blipTimer: 0,
+	    textPromise: null,
+	    nodPromise: null,
+	    nodding: false,
+	    initialize: function initialize(state) {
+	      self.state = state;
+	      font = state.font;
+	      self.clear();
+	    },
+	    display: function display(text) {
+	      var updatePromises = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+	
+	      if (self.textPromise && !self.textPromise.resolved && updatePromises) {
+	        self.textPromise.reject("interrupted");
+	      }
+	      text = self.text + text;
+	      self.text = text;
+	      self.characterAdvanceTimer = 30;
+	      self.nodding = false;
+	      var lines = [];
+	      var lastBreak = 0;
+	      var lastI = 0;
+	      var i = text.indexOf(" ");
+	      while (i < text.length && i >= 0) {
+	        if (font.computeWidth(text.slice(lastBreak, i)) > self.w / 3 - 40) {
+	          lines.push(text.slice(lastBreak, lastI));
+	          lastBreak = lastI + 1;
+	        }
+	        lastI = i;
+	        i = text.indexOf(" ", i + 1);
+	      }
+	
+	      if (font.computeWidth(text.slice(lastBreak)) > self.w / 3 - 40) {
+	        lines.push(text.slice(lastBreak, lastI));
+	        lastBreak = lastI + 1;
+	      }
+	
+	      lines.push(text.slice(lastBreak));
+	      self.lines = lines;
+	
+	      if (updatePromises) {
+	        return new Promise(function (resolve, reject) {
+	          self.textPromise = {
+	            resolve: resolve, reject: reject, resolved: false
+	          };
+	        });
+	      }
+	    },
+	    clear: function clear() {
+	      self.text = "";
+	      self.lines = [];
+	      self.nodding = false;
+	      self.displayCutoff = 0;
+	    },
+	    nod: function nod() {
+	      console.log("nod");
+	      this.nodding = true;
+	      return new Promise(function (resolve, reject) {
+	        self.nodPromise = {
+	          resolve: resolve, reject: reject, resolved: false
+	        };
+	      });
+	    },
+	    draw: function draw(shapes, font, matrix, opMatrix) {
+	      shapes.drawColoredRect(_gfxutils.Colors.BLACK, 0, 0, 1180, 200, 0);
+	      shapes.flush();
+	      opMatrix.load.scale(3, 3, 1);
+	      matrix.multiply(opMatrix);
+	      var y = 4;
+	      var cut = self.displayCutoff;
+	      for (var i = 0; i < self.lines.length; i++) {
+	        if (cut > 0) {
+	          font.draw(_gfxutils.Colors.WHITE, 5, y, 0, self.lines[i].slice(0, cut));
+	        }
+	        cut -= self.lines[i].length + 1;
+	        if (i == self.lines.length - 1 && self.nodding) {
+	          var w = font.computeWidth(self.lines[i]) + 5;
+	          shapes.drawColoredRect(_gfxutils.Colors.WHITE, w, y, w + 5, y + font.height - 1, 0);
+	        }
+	        y += font.height + 4;
+	      }
+	      font.flush();
+	    },
+	    tick: function tick(delta) {
+	      if (self.nodding && self.state.binds.nod.justPressed()) {
+	        self.display(" ", false);
+	        self.nodding = false;
+	        self.nodPromise.resolve();
+	      }
+	    },
+	    step: function step() {
+	      self.characterAdvanceTimer -= self.state.binds.fasterText.isPressed() || self.state.binds.nod.isPressed() ? 3 : 1;
+	      while (self.characterAdvanceTimer <= 0 && self.displayCutoff < self.text.length) {
+	        self.displayCutoff++;
+	        var chr = self.text[self.displayCutoff];
+	        switch (chr) {
+	          case " ":
+	            break;
+	          default:
+	            self.characterAdvanceTimer += 20;
+	        }
+	        chr = self.text[self.displayCutoff - 1];
+	        if (chr && chr.match("[a-zA-Z\\.,\!]")) {
+	          if (self.blip) {
+	            self.blip.stop();
+	          }
+	          self.blip = self.state.game.sound.playSound(_assetmgr.AssetManager.getAsset("game.sfx.textblip.default"));
+	        }
+	        if (self.displayCutoff >= self.text.length && self.textPromise) {
+	          self.displayCutoff = self.text.length;
+	          self.textPromise.resolve();
+	          self.textPromise.resolved = true;
+	        }
+	      }
+	    }
+	  };
+	  return self;
+	};
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.DialogueInterpreter = exports.DialogueLoader = undefined;
+	
+	var _blobUtil = __webpack_require__(2);
+	
+	var BlobUtil = _interopRequireWildcard(_blobUtil);
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	var DialogueLoader = exports.DialogueLoader = function DialogueLoader() {
+	  var loaders = {
+	    dialogue: function dialogue(placeholder) {
+	      return _assetmgr.AssetManager.getFile(placeholder.spec.src, placeholder.spec.link).then(function (blob) {
+	        return BlobUtil.blobToBinaryString(blob);
+	      }).then(function (str) {
+	        return new DOMParser().parseFromString(str, "application/xml");
+	      }).then(function (dom) {
+	        if (dom.documentElement.nodeName == "parsererror") {
+	          throw dom;
+	        }
+	        var root = dom.documentElement;
+	        if (root.localName != "dialogues") {
+	          throw "root node is node <dialogues>";
+	        }
+	        return root;
+	      });
+	    }
+	  };
+	  return {
+	    canLoad: function canLoad(placeholder) {
+	      return loaders[placeholder.spec.type] != undefined;
+	    },
+	    load: function load(placeholder) {
+	      return loaders[placeholder.spec.type](placeholder);
+	    }
+	  };
+	};
+	
+	var DialogueInterpreter = exports.DialogueInterpreter = function DialogueInterpreter() {
+	  var tree = void 0,
+	      textbox = void 0;
+	
+	  var state = {
+	    currentNode: null
+	  };
+	
+	  var interpreter = {
+	    loadTree: function loadTree(ltree) {
+	      tree = ltree;
+	    },
+	    linkTextbox: function linkTextbox(ltextbox) {
+	      textbox = ltextbox;
+	    },
+	    interpret: function interpret(dialogue) {
+	      while (dialogue.nodeType == 3) {
+	        dialogue = dialogue.nextSibling;
+	      }
+	      switch (dialogue.localName) {
+	        case "person":
+	          //NYI
+	          break;
+	        case "st":
+	          return textbox.display(dialogue.textContent.trim()).then(function () {
+	            return interpreter.interpret(dialogue.nextSibling);
+	          });
+	        case "nod":
+	          return textbox.nod().then(function () {
+	            return interpreter.interpret(dialogue.nextSibling);
+	          });
+	        case "clear":
+	          textbox.clear();
+	          break;
+	        case "pause":
+	          return new Promise(function (resolve, reject) {
+	            setTimeout(resolve, dialogue.getAttribute("length"));
+	          }).then(function () {
+	            return interpreter.interpret(dialogue.nextSibling);
+	          });
+	        default:
+	          textbox.clear();
+	          textbox.display("bad tag: " + dialogue.localName);
+	      }
+	      return interpreter.interpret(dialogue.nextSibling);
+	    },
+	    begin: function begin(identifier) {
+	      if (!tree) {
+	        throw "no dialogue tree has been loaded, you fool!";
+	      }
+	      var parts = identifier.split(".");
+	      var dialogue = tree;
+	      for (var i = 0; i < parts.length; i++) {
+	        for (var j = 0; j < dialogue.children.length; j++) {
+	          if (dialogue.children[j].getAttribute("id") == parts[i]) {
+	            dialogue = dialogue.children[j];
+	          }
+	        }
+	      }
+	      if (dialogue.localName != "dialogue") {
+	        throw "path '" + identifier + "' does not refer to a <dialogue> tag. instead, it refers to a <" + dialogue.localName + "> tag";
+	      }
+	
+	      interpreter.interpret(dialogue.children[0]);
+	    }
+	  };
+	  return interpreter;
+	};
+
+/***/ },
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -3351,6 +3365,13 @@
 	      source.buffer = buffer;
 	      source.connect(ctx.destination);
 	      source.start(0);
+	      return source;
+	    },
+	    createSound: function createSound(buffer) {
+	      var source = ctx.createBufferSource();
+	      source.buffer = buffer;
+	      source.connect(ctx.destination);
+	      return source;
 	    },
 	    playMusic: function playMusic(asset) {
 	      var tracks = {};

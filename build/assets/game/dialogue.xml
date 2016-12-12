@@ -165,7 +165,7 @@
             <st>beautiful,</st>
             <space />
             <pause length="200" />
-            <st>right,</st>
+            <st>rich,</st>
             <space />
             <pause length="200" />
             <st>sweet,</st>
@@ -223,6 +223,7 @@
             <choices>
                 <choice link="hale.intro">Hale's Introduction</choice>
                 <choice link="andrea.end call">End of Andrea's Call</choice>
+                <choice link="test.menu">Testing Menu</choice>
                 <choice link="null">Exit</choice>
             </choices>
         </dialogue>
@@ -306,6 +307,10 @@
         <dialogue id="smiths ready">
             <person>Hale</person>
             <st>Lina and Caleb Smith are ready for their interviews, Detective, are you any closer to solving this murder?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>As much closer as I can be when I've only interviewed one person so far, Officer. Thanks.</st>
             <nod />
             <clear />
             <modCall id="hale" link="hale.call2" />
@@ -468,6 +473,14 @@
     </group>
     
     <group id="test">
+        <dialogue id="menu">
+            <person>Debugger</person>
+            <choices>
+                <choice link="contradict">evidence test</choice>
+                <choice link="modcall">modcall test</choice>
+                <choice link="misc.null">exit</choice>
+            </choices>
+        </dialogue>
         <dialogue id="contradict">
             <notepad id="no new regulations">
                 The DoM will not be issuing any more regulations this month.
@@ -507,6 +520,26 @@
             <nod />
             <clear />
             <st>You and your silly notebook! Sounds fine to me. You sure you don't have any screws loose up there?</st>
+            <nod />
+            <clear />
+        </dialogue>
+        <dialogue id="modcall">
+            <person>Debugger</person>
+            <st>Adding call...</st>
+            <addCall id="modcalltest" link="test.modcall2">modCall test</addCall>
+            <nod />
+            <clear />
+        </dialogue>
+        <dialogue id="modcall2">
+            <person>Debugger</person>
+            <st>modCall stage 2</st>
+            <modCall id="modcalltest">test.modcall3</modCall>
+            <nod />
+            <clear />
+        </dialogue>
+        <dialogue id="modcall3">
+            <person>Debugger</person>
+            <st>modCall stage 3</st>
             <nod />
             <clear />
         </dialogue>

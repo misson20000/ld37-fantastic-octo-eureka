@@ -2466,11 +2466,22 @@
 	        });
 	        return Promise.resolve();
 	      });
+	      dialogue.addCommand("delNote", function (elem) {
+	        self.notepad.delNote(elem.textContent.trim());
+	      });
 	      dialogue.addCommand("addCall", function (elem) {
 	        self.telephone.addCall({
 	          link: elem.getAttribute("link"),
 	          title: elem.textContent.trim(),
 	          id: elem.getAttribute("id")
+	        });
+	        return Promise.resolve();
+	      });
+	      dialogue.addCommand("modCall", function (elem) {
+	        self.telephone.modCall({
+	          id: elem.getAttribute("id"),
+	          link: elem.getAttribute("link"),
+	          title: elem.textContent.trim()
 	        });
 	        return Promise.resolve();
 	      });
@@ -2741,7 +2752,8 @@
 	  trimShadow: (0, _gfxutils.Color)(0.2, 0.2, 0.2, 1),
 	  textbox: {
 	    bg: (0, _gfxutils.Color)(0.07, 0.07, 0.05, 1),
-	    trim: (0, _gfxutils.Color)("#8CB856")
+	    trim: (0, _gfxutils.Color)("#8CB856"),
+	    visited: (0, _gfxutils.Color)(0.5, 0.5, 0.51, 1)
 	  },
 	  soliloquyText: (0, _gfxutils.Color)(0.5, 0.5, 1, 1),
 	  notepad: (0, _gfxutils.Color)("#fffc7a"),
@@ -3326,7 +3338,7 @@
 	            if (_i == self.selectedChoice) {
 	              font.draw(_gfxutils.Colors.WHITE, 5, y, 0, ">");
 	            }
-	            font.draw(_gfxutils.Colors.WHITE, 15, y, 0, self.choiceList[_i].content);
+	            font.draw(self.choiceList[_i].visited ? _palette.colors.textbox.visited : _gfxutils.Colors.WHITE, 15, y, 0, self.choiceList[_i].content);
 	            y += font.height + 4;
 	          }
 	          break;
@@ -3550,6 +3562,12 @@
 	        self.computeLinewrap();
 	      }
 	    },
+	    delNote: function delNote(id) {
+	      var note = self.noteMap[id];
+	      var i = self.notes.indexOf(note);
+	      self.notes.splice(i, 1);
+	      self.noteMap[id] = null;
+	    },
 	    step: function step() {
 	      self.scale += (self.scaleTgt - self.scale) * 0.1;
 	    },
@@ -3723,7 +3741,7 @@
 	        self.callMap[call.id] = call;
 	      }
 	    },
-	    modCall: function modCall(id, newCall) {
+	    modCall: function modCall(newCall) {
 	      var i = self.calls.indexOf(self.callMap[newCall.id]);
 	      self.calls[i] = newCall;
 	      self.callMap[newCall.id] = newCall;
@@ -3860,6 +3878,8 @@
 	  var extraCommands = {};
 	
 	  var interpreter = {
+	    visitedTrees: {},
+	
 	    loadTree: function loadTree(ltree) {
 	      tree = ltree;
 	    },
@@ -3946,6 +3966,7 @@
 	                  }
 	                  choices.push({
 	                    content: choice.textContent.trim(),
+	                    visited: interpreter.visitedTrees[interpreter.getPathElement(interpreter.findTree(choice.getAttribute("link"), interpreter.findGroup(dialogue)))],
 	                    callback: function callback() {
 	                      return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
 	                    }
@@ -3964,6 +3985,7 @@
 	                  var person = textbox.person;
 	                  choices.push({
 	                    content: choice.textContent.trim(),
+	                    visited: interpreter.visitedTrees[interpreter.getPathElement(interpreter.findTree(choice.getAttribute("correct"), interpreter.findGroup(dialogue)))],
 	                    callback: function callback() {
 	                      return textbox.display(choice.textContent.trim()).then(function () {
 	                        return notepad.pickEvidence().then(function (evidence) {
@@ -4017,18 +4039,24 @@
 	      return interpreter.interpret(dialogue.nextSibling);
 	    },
 	    findGroup: function findGroup(element) {
-	      if (element.localName == "group") {
-	        return element;
+	      if (!element.parentElement) {
+	        return null;
 	      }
-	      if (element.parentElement) {
-	        return interpreter.findGroup(element.parentElement);
-	      } else {
-	        throw "no group found";
+	      if (element.parentElement.localName == "group") {
+	        return element.parentElement;
 	      }
+	      return interpreter.findGroup(element.parentElement);
 	    },
-	    begin: function begin(identifier) {
-	      var scope = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-	
+	    getPathElement: function getPathElement(element) {
+	      var parts = [element.getAttribute("id")];
+	      var group = interpreter.findGroup(element);
+	      while (group) {
+	        parts.push(group.getAttribute("id"));
+	        group = interpreter.findGroup(group);
+	      }
+	      return parts.reverse().join(".");
+	    },
+	    findTree: function findTree(identifier, scope) {
 	      if (!tree) {
 	        throw "no dialogue tree has been loaded, you fool!";
 	      }
@@ -4070,7 +4098,14 @@
 	      if (dialogue.localName != "dialogue") {
 	        throw "path '" + identifier + "' does not refer to a <dialogue> tag. instead, it refers to a <" + dialogue.localName + "> tag";
 	      }
+	      return dialogue;
+	    },
+	    begin: function begin(identifier) {
+	      var scope = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 	
+	      var dialogue = interpreter.findTree(identifier, scope);
+	      interpreter.visitedTrees[interpreter.getPathElement(dialogue)] = true;
+	      console.log("hey");
 	      return interpreter.interpret(dialogue.children[0]);
 	    }
 	  };

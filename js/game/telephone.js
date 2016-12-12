@@ -77,6 +77,9 @@ export let Telephone = () => {
       self.hovered = -1;
       for(let y = 80; y -bgRect.y < bgRect.h; y+= 40) {
         let by = Math.min(y+40, bgRect.h + bgRect.y);
+        if(i >= self.calls.length) {
+          break;
+        }
         if(self.bx() > 0 && self.bx() < self.bgRect.w &&
            self.my() > y && self.my() < by) {
           self.hovered = i;

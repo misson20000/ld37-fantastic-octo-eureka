@@ -52,9 +52,9 @@
 	
 	var _assetmgr = __webpack_require__(7);
 	
-	var _sound = __webpack_require__(26);
+	var _sound = __webpack_require__(28);
 	
-	var _dialogue = __webpack_require__(25);
+	var _dialogue = __webpack_require__(27);
 	
 	var game = {};
 	window.theGame = game;
@@ -651,11 +651,17 @@
 	      var tform = _math.MatrixTransformer.create();
 	
 	      var self = {
-	        useMaterial: function useMaterial(mat) {
+	        useMaterial: function useMaterial(mat, block) {
+	          var lastMaterial = material;
 	          if (material) {
 	            material.flush();
 	          }
 	          material = mat;
+	          if (block) {
+	            block();
+	            material.flush();
+	            material = lastMaterial;
+	          }
 	        },
 	        useMatrix: function useMatrix(mat) {
 	          tform.useMatrix(mat);
@@ -2340,7 +2346,7 @@
 	
 	var obj = _interopRequireWildcard(_objects);
 	
-	var _dialogue = __webpack_require__(25);
+	var _dialogue = __webpack_require__(27);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -2406,6 +2412,7 @@
 	    game: game,
 	    font: font,
 	    debugMode: false,
+	    availableCalls: {},
 	    camera: {
 	      x: 0,
 	      y: 0,
@@ -2428,22 +2435,39 @@
 	    },
 	    initialize: function initialize() {
 	      console.log("initialize play state");
-	      //self.addObject(obj.Office());
+	      self.addObject(obj.Office());
+	      self.addObject(self.notepad = obj.Notepad());
+	      self.addObject(self.telephone = obj.Telephone());
 	      self.addObject(self.fader = obj.Fader());
 	      self.addObject(self.textBox = obj.TextBox());
 	      dialogue.linkTextbox(self.textBox);
+	      dialogue.linkNotepad(self.notepad);
 	      dialogue.addCommand("unfade", function (params) {
 	        self.fader.unfade();
 	        return Promise.resolve();
 	      });
 	      dialogue.addCommand("sfx", function (elem) {
-	        //        game.sound.playeSound(AssetManager.getAsset(elem.textContent.trim()));
+	        game.sound.playSound(_assetmgr.AssetManager.getAsset(elem.textContent.trim()));
 	        return Promise.resolve();
 	      });
-	      dialogue.addCommand("notebook", function (elem) {
+	      dialogue.addCommand("notepad", function (elem) {
+	        self.notepad.addNote({
+	          id: elem.getAttribute("id"),
+	          content: elem.textContent.trim()
+	        });
 	        return Promise.resolve();
 	      });
-	      dialogue.begin("andrea.entry");
+	      dialogue.addCommand("addCall", function (elem) {
+	        self.availableCalls[elem.getAttribute("id")] = {
+	          link: elem.getAttribute("link"),
+	          title: elem.textContent.trim()
+	        };
+	        return Promise.resolve();
+	      });
+	      self.fader.unfade();
+	      dialogue.begin("test.contradict").then(function () {
+	        self.textBox.hide();
+	      });
 	    },
 	    drawScene: function drawScene() {
 	      render.clearBuffers();
@@ -2536,7 +2560,15 @@
 	        }
 	      }
 	    },
+	
+	    mouse: {},
 	    tick: function tick(delta) {
+	      var factor = Math.min(render.width() / width, render.height() / height);
+	      var tgtW = width * factor;
+	      var tgtH = height * factor;
+	      self.mouse.x = (game.mouse.x - (render.width() - tgtW) / 2) / factor;
+	      self.mouse.y = (game.mouse.y - (render.height() - tgtH) / 2) / factor;
+	
 	      uniformTimer += delta;
 	      while (uniformTimer > 5) {
 	        self.step();
@@ -2692,7 +2724,10 @@
 	  textbox: {
 	    bg: (0, _gfxutils.Color)(0.07, 0.07, 0.05, 1),
 	    trim: (0, _gfxutils.Color)("#8CB856")
-	  }
+	  },
+	  soliloquyText: (0, _gfxutils.Color)(0.5, 0.5, 1, 1),
+	  notepad: (0, _gfxutils.Color)("#fffc7a"),
+	  notepadLines: (0, _gfxutils.Color)("#c6c6ba")
 	};
 
 /***/ },
@@ -2803,6 +2838,30 @@
 	    enumerable: true,
 	    get: function get() {
 	      return _fader[key];
+	    }
+	  });
+	});
+	
+	var _notepad = __webpack_require__(25);
+	
+	Object.keys(_notepad).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _notepad[key];
+	    }
+	  });
+	});
+	
+	var _telephone = __webpack_require__(26);
+	
+	Object.keys(_telephone).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _telephone[key];
 	    }
 	  });
 	});
@@ -3018,8 +3077,8 @@
 	      self.state = state;
 	    },
 	
-	    x: -640,
-	    y: -360,
+	    x: 0,
+	    y: 0,
 	    w: 1280,
 	    h: 720,
 	    parallax: 1,
@@ -3031,9 +3090,9 @@
 	      drawStriped(shapes, 100, 590, 680, 720);
 	
 	      shapes.drawColoredRect(_palette.colors.window, 100, 160, 680, 590, 0);
-	      shapes.drawColoredRect(_palette.colors.trim, 75, 137, 705, 160, 0);
-	      shapes.drawColoredRect(_palette.colors.trimShadow, 75, 157, 705, 160, 0);
-	      shapes.drawColoredRect(_palette.colors.trim, 100, 160, 75, 590, 0);
+	      //      shapes.drawColoredRect(colors.trim, 75, 137, 705, 160, 0);
+	      //     shapes.drawColoredRect(colors.trimShadow, 75, 157, 705, 160, 0);
+	      //    shapes.drawColoredRect(colors.trim, 100, 160, 75, 590, 0);
 	
 	      shapes.drawColoredRect(_palette.colors.carpet, 0, 640, 1280, 720, 0); // carpet
 	    }
@@ -3064,20 +3123,24 @@
 	  var font = void 0;
 	
 	  var blipmap = {
-	    Andrea: "female"
+	    Avery: "male",
+	    Andrea: "female",
+	    Lina: "female",
+	    Hale: "hale",
+	    Telephone: "nobody"
 	  };
 	
 	  var blipFor = function blipFor(person) {
-	    if (person && blipmap[person]) {
-	      return _assetmgr.AssetManager.getAsset("game.sfx.textblip." + blipmap[person]);
+	    if (person && blipmap[person] != undefined) {
+	      return blipmap[person];
 	    } else {
-	      return _assetmgr.AssetManager.getAsset("game.sfx.textblip.default");
+	      return "default";
 	    }
 	  };
 	
 	  var self = {
 	    x: 50,
-	    y: 470,
+	    y: 500,
 	    w: 1180,
 	    h: 200,
 	    parallax: 0,
@@ -3089,15 +3152,24 @@
 	    nodPromise: null,
 	    choicePromise: null,
 	    nodding: false,
+	    skippingEnabled: true,
+	    choicesCooldown: 0,
 	    mode: "text",
 	    initialize: function initialize(state) {
 	      self.state = state;
 	      font = state.font;
 	      self.clear();
 	    },
+	    skippable: function skippable() {
+	      self.skippingEnabled = true;
+	    },
+	    unskippable: function unskippable() {
+	      self.skippingEnabled = false;
+	    },
 	    display: function display(text) {
 	      var updatePromises = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
 	
+	      self.hidden = false;
 	      self.mode = "text";
 	      if (self.textPromise && !self.textPromise.resolved && updatePromises) {
 	        self.textPromise.reject("interrupted");
@@ -3106,6 +3178,7 @@
 	      self.text = text;
 	      self.characterAdvanceTimer = 30;
 	      self.nodding = false;
+	      self.color = _gfxutils.Colors.WHITE;
 	      var lines = [];
 	      var lastBreak = 0;
 	      var lastI = 0;
@@ -3135,10 +3208,35 @@
 	        });
 	      }
 	    },
+	    soliloquy: function soliloquy(text) {
+	      var p = self.display(text);
+	      self.color = _palette.colors.soliloquyText;
+	      return p;
+	    },
+	    hide: function hide() {
+	      self.hidden = true;
+	    },
+	    unhide: function unhide() {
+	      self.hidden = false;
+	    },
+	    setPerson: function setPerson(person) {
+	      self.person = person;
+	      self.setVoice(blipFor(person));
+	    },
+	    setVoice: function setVoice(voice) {
+	      if (voice == "nobody") {
+	        self.voice = null;
+	      } else {
+	        self.voice = _assetmgr.AssetManager.getAsset("game.sfx.textblip." + voice);
+	      }
+	      return self.voice;
+	    },
 	    choices: function choices(_choices) {
+	      self.hidden = false;
 	      self.choiceList = _choices;
 	      self.mode = "choices";
 	      self.selectedChoice = 0;
+	      self.choicesCooldown = 20;
 	      return new Promise(function (resolve, reject) {
 	        self.choicePromise = {
 	          resolve: resolve, reject: reject, resolved: false
@@ -3161,6 +3259,9 @@
 	      });
 	    },
 	    draw: function draw(shapes, font, matrix, opMatrix) {
+	      if (self.hidden) {
+	        return;
+	      }
 	      shapes.drawColoredTriangle(_palette.colors.textbox.trim, 150, -31, 180, -1, 150, -1, 0);
 	      shapes.drawColoredTriangle(_palette.colors.textbox.bg, 150, -30, 180, 0, 150, 0, 0);
 	      shapes.drawColoredRect(_palette.colors.textbox.trim, -1, -1, 1182, 202, 0);
@@ -3184,12 +3285,12 @@
 	          var cut = self.displayCutoff;
 	          for (var i = 0; i < self.lines.length; i++) {
 	            if (cut > 0) {
-	              font.draw(_gfxutils.Colors.WHITE, 5, y, 0, self.lines[i].slice(0, cut));
+	              font.draw(self.color, 5, y, 0, self.lines[i].slice(0, cut));
 	            }
 	            cut -= self.lines[i].length + 1;
 	            if (i == self.lines.length - 1 && self.nodding) {
 	              var w = font.computeWidth(self.lines[i]) + 5;
-	              shapes.drawColoredRect(_gfxutils.Colors.WHITE, w, y, w + 5, y + font.height - 1, 0);
+	              shapes.drawColoredRect(self.color, w, y, w + 5, y + font.height - 1, 0);
 	            }
 	            y += font.height + 4;
 	          }
@@ -3229,15 +3330,23 @@
 	
 	          self.state.game.sound.playSound(_assetmgr.AssetManager.getAsset("game.sfx.select"));
 	        }
-	        if (self.state.binds.nod.justPressed()) {
+	        self.choicesCooldown--;
+	        if (self.state.binds.nod.justPressed() && self.choicesCooldown <= 0) {
 	          self.state.game.sound.playSound(_assetmgr.AssetManager.getAsset("game.sfx.confirm"));
 	          self.clear();
 	          self.choicePromise.resolve(self.choiceList[self.selectedChoice].callback());
 	        }
 	      }
+	      if (self.mode == "text") {
+	        if (self.state.binds.nod.justPressed() || self.state.binds.fasterText.justPressed()) {
+	          self.characterAdvanceTimer -= 10;
+	        }
+	      }
 	    },
+	
+	    speed: 1,
 	    step: function step() {
-	      self.characterAdvanceTimer -= self.state.binds.fasterText.isPressed() || self.state.binds.nod.isPressed() ? 3 : 1;
+	      self.characterAdvanceTimer -= (self.skippingEnabled && (self.state.binds.fasterText.isPressed() || self.state.binds.nod.isPressed()) ? 3 : 1) * self.speed;
 	      while (self.characterAdvanceTimer <= 0 && self.displayCutoff < self.text.length) {
 	        self.displayCutoff++;
 	        var chr = self.text[self.displayCutoff];
@@ -3249,10 +3358,7 @@
 	        }
 	        chr = self.text[self.displayCutoff - 1];
 	        if (chr && chr.match("[a-zA-Z0-9\\.,\!\?]")) {
-	          if (self.blip) {
-	            //            self.blip.stop();
-	          }
-	          self.blip = self.state.game.sound.playSound(blipFor(self.person));
+	          self.blip = self.state.game.sound.playSound(self.voice);
 	        }
 	        if (self.displayCutoff >= self.text.length && self.textPromise) {
 	          self.displayCutoff = self.text.length;
@@ -3333,6 +3439,260 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.Notepad = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	var _gfxutils = __webpack_require__(10);
+	
+	var _math = __webpack_require__(8);
+	
+	var _palette = __webpack_require__(15);
+	
+	var Notepad = exports.Notepad = function Notepad() {
+	  var matStack = _math.Mat4Stack.create();
+	
+	  var font = void 0;
+	  var textColor = (0, _gfxutils.Color)(0, 0, 0, 1);
+	  var hoveredColor = (0, _gfxutils.Color)(0.5, 0.5, 0.7, 1);
+	  var linesPerPage = 12;
+	
+	  var self = {
+	    x: 50,
+	    y: 30,
+	    w: 350,
+	    h: 430,
+	    scale: 0.15,
+	    scaleTgt: 1.0,
+	    notes: [],
+	    noteMap: {},
+	    pages: [],
+	    page: 0,
+	    hoveredNote: 1,
+	    evidencePromise: null,
+	    pickingEvidence: false,
+	    initialize: function initialize(state) {
+	      self.state = state;
+	      font = state.game.render.createFontRenderer(_assetmgr.AssetManager.getAsset("game.font.gunny"), _assetmgr.AssetManager.getAsset("base.shader.flat.texcolor"));
+	      self.computeLinewrap();
+	    },
+	    pickEvidence: function pickEvidence() {
+	      return new Promise(function (resolve, reject) {
+	        self.pickingEvidence = true;
+	        self.evidencePromise = { resolve: resolve, reject: reject };
+	      });
+	    },
+	    computeLinewrap: function computeLinewrap() {
+	      var pages = [];
+	      var page = [];
+	      for (var n = 0; n < self.notes.length; n++) {
+	        var lines = [];
+	        var text = self.notes[n].content;
+	        var lastBreak = 0;
+	        var lastI = 0;
+	        var i = text.indexOf(" ");
+	        while (i < text.length && i >= 0) {
+	          if (font.computeWidth(text.slice(lastBreak, i)) > self.w - 20) {
+	            lines.push({ content: text.slice(lastBreak, lastI), note: self.notes[n] });
+	            lastBreak = lastI + 1;
+	          }
+	          lastI = i;
+	          i = text.indexOf(" ", i + 1);
+	        }
+	
+	        if (font.computeWidth(text.slice(lastBreak)) > self.w - 20) {
+	          lines.push({ content: text.slice(lastBreak, lastI), note: self.notes[n] });
+	          lastBreak = lastI + 1;
+	        }
+	
+	        lines.push({ content: text.slice(lastBreak), note: self.notes[n] });
+	        if (page.length + lines.length > linesPerPage) {
+	          pages.push(page);
+	          page = lines;
+	        } else {
+	          page = page.concat(lines);
+	        }
+	      }
+	
+	      pages.push(page);
+	      self.pages = pages;
+	    },
+	    addNote: function addNote(note) {
+	      self.noteMap[note.id] = note;
+	      self.notes.push(note);
+	      self.computeLinewrap();
+	    },
+	    step: function step() {
+	      self.scale += (self.scaleTgt - self.scale) * 0.1;
+	    },
+	    tick: function tick(delta) {
+	      if (self.pickingEvidence || self.state.mouse.x > self.x && self.state.mouse.y > self.y && self.state.mouse.x - self.x < self.w * self.scale && self.state.mouse.y - self.y < self.h * self.scale) {
+	        self.scaleTgt = 1.0;
+	      } else {
+	        self.scaleTgt = 0.15;
+	      }
+	
+	      if (self.isHovering(self.leftArrow) && self.page > 0 && self.state.game.mouse.justClicked()) {
+	        self.page--;
+	      }
+	
+	      if (self.isHovering(self.rightArrow) && self.page + 1 < self.pages.length && self.state.game.mouse.justClicked()) {
+	        self.page++;
+	      }
+	
+	      self.hoveredNote = null;
+	      if (self.mx() > self.x && self.mx() < self.x + self.w) {
+	        var lines = self.pages[self.page];
+	        var y = 68;
+	        for (var i = 0; i < lines.length; i++) {
+	          if (self.my() > y && self.my() < y + 30 && self.mx() < font.computeWidth(lines[i].content) + 20) {
+	            self.hoveredNote = lines[i].note;
+	            if (self.state.game.mouse.justClicked() && self.pickingEvidence) {
+	              self.evidencePromise.resolve(self.hoveredNote);
+	              self.pickingEvidence = false;
+	            }
+	            break;
+	          }
+	          y += 30;
+	        }
+	      }
+	    },
+	
+	    leftArrow: {
+	      x: 350 - 10 - 25 - 10 - 25,
+	      w: 25,
+	      h: 25,
+	      y: 430 - 10 - 15 - 2
+	    },
+	    rightArrow: {
+	      x: 350 - 10 - 25,
+	      w: 25,
+	      h: 25,
+	      y: 430 - 10 - 15 - 2
+	    },
+	    mx: function mx() {
+	      return (self.state.mouse.x - self.x) * self.scale;
+	    },
+	    my: function my() {
+	      return (self.state.mouse.y - self.y) * self.scale;
+	    },
+	    isHovering: function isHovering(arrow) {
+	      return self.mx() > arrow.x && self.my() > arrow.y && self.mx() < arrow.x + arrow.w && self.my() < arrow.y + arrow.h;
+	    },
+	    draw: function draw(shapes, retrofont, matrix, opMatrix) {
+	      opMatrix.load.scale(self.scale, self.scale, 1);
+	      matrix.multiply(opMatrix);
+	      shapes.drawColoredRect(_palette.colors.notepad, 0, 0, self.w, self.h, 0);
+	      shapes.flush();
+	
+	      for (var _y = 70; _y < self.h; _y += 30) {
+	        shapes.drawColoredRect(_palette.colors.notepadLines, 0, _y, self.w, _y + 1, 0);
+	        shapes.drawColoredRect(textColor, 8, _y + 16.5, 12, _y + 20.5, 0);
+	      }
+	
+	      if (self.page > 0) {
+	        matStack.push(matrix);
+	        opMatrix.load.translate(self.leftArrow.x, self.leftArrow.y, 0);
+	        matrix.multiply(opMatrix);
+	        opMatrix.load.scale(self.leftArrow.w, self.leftArrow.h, 0);
+	        matrix.multiply(opMatrix);
+	        var color = self.isHovering(self.leftArrow) ? _gfxutils.Colors.WHITE : _palette.colors.notepadLines;
+	        shapes.drawColoredRect(color, 1 / 2, 1 / 3, 1, 2 / 3, 0);
+	        shapes.drawColoredTriangle(color, 0, 1 / 2, 1 / 2, 0, 1 / 2, 1, 0);
+	        matStack.pop(matrix);
+	      }
+	
+	      if (self.page + 1 < self.pages.length) {
+	        matStack.push(matrix);
+	        opMatrix.load.translate(self.rightArrow.x + self.rightArrow.w, self.rightArrow.y, 0);
+	        matrix.multiply(opMatrix);
+	        opMatrix.load.scale(-self.rightArrow.w, self.rightArrow.h, 0);
+	        matrix.multiply(opMatrix);
+	        var _color = self.isHovering(self.rightArrow) ? _gfxutils.Colors.WHITE : _palette.colors.notepadLines;
+	        shapes.drawColoredRect(_color, 1 / 2, 1 / 3, 1, 2 / 3, 0);
+	        shapes.drawColoredTriangle(_color, 0, 1 / 2, 1 / 2, 0, 1 / 2, 1, 0);
+	        matStack.pop(matrix);
+	      }
+	
+	      shapes.flush();
+	
+	      textColor.a = self.scale;
+	      hoveredColor.a = self.scale;
+	      font.useMatrix(matrix);
+	      font.draw(textColor, 5, 75 - font.height, 0, "Smith Manor Case");
+	
+	      var y = 70;
+	      var lines = self.pages[self.page];
+	      for (var i = 0; i < lines.length; i++) {
+	        font.draw(self.pickingEvidence && self.hoveredNote == lines[i].note ? hoveredColor : textColor, 17, y - 2, 0, lines[i].content);
+	
+	        y += 30;
+	      }
+	
+	      font.flush();
+	    }
+	  };
+	  return self;
+	};
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.Telephone = undefined;
+	
+	var _assetmgr = __webpack_require__(7);
+	
+	var _gfxutils = __webpack_require__(10);
+	
+	var _math = __webpack_require__(8);
+	
+	var _palette = __webpack_require__(15);
+	
+	var Telephone = exports.Telephone = function Telephone() {
+	  var matStack = _math.Mat4Stack.create();
+	
+	  var font = void 0;
+	  var state = void 0;
+	  var iconMaterial = void 0;
+	
+	  var self = {
+	    x: 1180,
+	    y: 30,
+	    w: 80,
+	    h: 80,
+	    parallax: 0,
+	    initialize: function initialize(lstate) {
+	      state = lstate;
+	      iconMaterial = state.game.render.createMaterial(_assetmgr.AssetManager.getAsset("base.shader.flat.textured"), {
+	        matrix: state.game.render.pixelMatrix,
+	        tex: _assetmgr.AssetManager.getAsset("game.image.telephone")
+	      });
+	    },
+	    draw: function draw(shapes, retrofont, opMatrix, matrix) {
+	      shapes.useMaterial(iconMaterial, function () {
+	        console.log("HEY!");
+	        shapes.drawTexturedRect(0, 0, self.w, self.h * 0.7, 0, 0, 1, 0.7, 0);
+	      });
+	    }
+	  };
+	  return self;
+	};
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 	exports.DialogueInterpreter = exports.DialogueLoader = undefined;
 	
 	var _blobUtil = __webpack_require__(2);
@@ -3374,7 +3734,8 @@
 	
 	var DialogueInterpreter = exports.DialogueInterpreter = function DialogueInterpreter() {
 	  var tree = void 0,
-	      textbox = void 0;
+	      textbox = void 0,
+	      notepad = void 0;
 	
 	  var state = {
 	    currentNode: null
@@ -3389,19 +3750,38 @@
 	    linkTextbox: function linkTextbox(ltextbox) {
 	      textbox = ltextbox;
 	    },
+	    linkNotepad: function linkNotepad(lnotepad) {
+	      notepad = lnotepad;
+	    },
 	    addCommand: function addCommand(name, func) {
 	      extraCommands[name] = func;
 	    },
 	    interpret: function interpret(dialogue) {
-	      while (dialogue.nodeType == 3) {
+	      while (dialogue && dialogue.nodeType == 3) {
 	        dialogue = dialogue.nextSibling;
 	      }
+	
+	      if (!dialogue) {
+	        console.log("reached end of dialogue tree");
+	        return Promise.resolve();
+	      }
+	
 	      switch (dialogue.localName) {
 	        case "person":
-	          textbox.person = dialogue.textContent.trim();
+	          textbox.setPerson(dialogue.textContent.trim());
+	          break;
+	        case "voice":
+	          textbox.setVoice(dialogue.textContent.trim());
+	          break;
+	        case "speed":
+	          textbox.speed = parseFloat(dialogue.getAttribute("factor"));
 	          break;
 	        case "st":
 	          return textbox.display(dialogue.textContent.trim()).then(function () {
+	            return interpreter.interpret(dialogue.nextSibling);
+	          });
+	        case "soliloquy":
+	          return textbox.soliloquy(dialogue.textContent.trim()).then(function () {
 	            return interpreter.interpret(dialogue.nextSibling);
 	          });
 	        case "space":
@@ -3414,6 +3794,12 @@
 	          });
 	        case "clear":
 	          textbox.clear();
+	          break;
+	        case "unskippable":
+	          textbox.unskippable();
+	          break;
+	        case "skippable":
+	          textbox.skippable();
 	          break;
 	        case "pause":
 	          return new Promise(function (resolve, reject) {
@@ -3429,18 +3815,58 @@
 	            if (choice.nodeType == 3) {
 	              return "continue";
 	            }
-	            if (choice.localName != "choice") {
-	              textbox.display("bad choices child");
-	            }
-	            if (!choice.hasAttribute("link")) {
-	              textbox.display("choice w/o link attribute");
-	            }
-	            choices.push({
-	              content: choice.textContent.trim(),
-	              callback: function callback() {
-	                return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
+	
+	            (function () {
+	              switch (choice.localName) {
+	                case "choice":
+	                  if (!choice.hasAttribute("link")) {
+	                    break;
+	                  }
+	                  choices.push({
+	                    content: choice.textContent.trim(),
+	                    callback: function callback() {
+	                      return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
+	                    }
+	                  });
+	                  break;
+	                case "evidence":
+	                  if (!choice.hasAttribute("note")) {
+	                    break;
+	                  }
+	                  if (!choice.hasAttribute("correct")) {
+	                    break;
+	                  }
+	                  if (!choice.hasAttribute("wrong")) {
+	                    break;
+	                  }
+	                  var person = textbox.person;
+	                  choices.push({
+	                    content: choice.textContent.trim(),
+	                    callback: function callback() {
+	                      return textbox.display(choice.textContent.trim()).then(function () {
+	                        return notepad.pickEvidence().then(function (evidence) {
+	                          if (evidence.id == choice.getAttribute("note")) {
+	                            return interpreter.begin(choice.getAttribute("correct"), interpreter.findGroup(dialogue));
+	                          } else {
+	                            return interpreter.begin(choice.getAttribute("wrong"), interpreter.findGroup(dialogue)).then(function () {
+	                              textbox.setPerson(person);
+	                              return interpreter.interpret(dialogue); // go right back to the choices
+	                            });
+	                          }
+	                        });
+	                      });
+	                    }
+	                  });
+	                  break;
+	                default:
+	                  choices.push({
+	                    content: "<" + choice.localName + ">",
+	                    callback: function callback() {
+	                      return textbox.display(choice.outerXML);
+	                    }
+	                  });
 	              }
-	            });
+	            })();
 	          };
 	
 	          for (var i = 0; i < dialogue.children.length; i++) {
@@ -3450,6 +3876,8 @@
 	          }
 	          return textbox.choices(choices);
 	          break;
+	        case "jump":
+	          return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue));
 	        default:
 	          if (extraCommands[dialogue.localName]) {
 	            return extraCommands[dialogue.localName](dialogue).then(function () {
@@ -3524,7 +3952,7 @@
 	};
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -3604,11 +4032,13 @@
 	      };
 	    },
 	    playSound: function playSound(buffer) {
-	      var source = ctx.createBufferSource();
-	      source.buffer = buffer;
-	      source.connect(ctx.destination);
-	      source.start(0);
-	      return source;
+	      if (buffer) {
+	        var source = ctx.createBufferSource();
+	        source.buffer = buffer;
+	        source.connect(ctx.destination);
+	        source.start(0);
+	        return source;
+	      }
 	    },
 	    createSound: function createSound(buffer) {
 	      var source = ctx.createBufferSource();

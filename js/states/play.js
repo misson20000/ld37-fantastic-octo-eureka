@@ -7,7 +7,7 @@ import * as box2d from "box2d-html5";
 import * as obj from "../game/objects.js";
 import {DialogueInterpreter} from "../game/dialogue.js";
 
-let lerp = (a, b, x) => {
+export let lerp = (a, b, x) => {
   return a + x * (b-a);
 };
 
@@ -69,6 +69,7 @@ export let PlayState = (game, transition) => {
   let self = {
     game,
     font,
+    dialogue,
     debugMode: false,
     availableCalls: {},
     camera: {
@@ -98,6 +99,7 @@ export let PlayState = (game, transition) => {
       self.addObject(self.telephone = obj.Telephone());
       self.addObject(self.fader = obj.Fader());
       self.addObject(self.textBox = obj.TextBox());
+      self.telephone.textbox = self.textBox;
       dialogue.linkTextbox(self.textBox);
       dialogue.linkNotepad(self.notepad);
       dialogue.addCommand("unfade", (params) => {
@@ -115,16 +117,32 @@ export let PlayState = (game, transition) => {
         });
         return Promise.resolve();
       });
-      dialogue.addCommand("addCall", (elem) => {
-        self.availableCalls[elem.getAttribute("id")] = {
-          link: elem.getAttribute("link"),
-          title: elem.textContent.trim()
-        };
+      dialogue.addCommand("notebook", (elem) => {
+        self.notepad.addNote({
+          id: elem.getAttribute("id"),
+          content: elem.textContent.trim()
+        });
         return Promise.resolve();
       });
-      self.fader.unfade();
-      dialogue.begin("test.contradict").then(() => {
+      dialogue.addCommand("addCall", (elem) => {
+        self.telephone.addCall({
+          link: elem.getAttribute("link"),
+          title: elem.textContent.trim(),
+          id: elem.getAttribute("id")
+        });
+        return Promise.resolve();
+      });
+      dialogue.addCommand("enableCalling", (elem) => {
+        self.telephone.enabled = true;
+        return Promise.resolve();
+      });
+      dialogue.addCommand("disableCalling", (elem) => {
+        self.telephone.enabled = false;
+        return Promise.resolve();
+      });
+      dialogue.begin("misc.debugmenu").then(() => {
         self.textBox.hide();
+        self.fader.unfade();
       });
     },
     drawScene() {

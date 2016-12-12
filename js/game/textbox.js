@@ -54,7 +54,8 @@ export let TextBox = () => {
       self.hidden = false;
       self.mode = "text";
       if(self.textPromise && !self.textPromise.resolved && updatePromises) {
-        self.textPromise.reject("interrupted");
+        self.textPromise.resolve();
+//        self.textPromise.reject("interrupted");
       }
       text = self.text + text;
       self.text = text;
@@ -97,6 +98,7 @@ export let TextBox = () => {
     },
     hide() {
       self.hidden = true;
+      self.clear();
     },
     unhide() {
       self.hidden = false;
@@ -251,7 +253,7 @@ export let TextBox = () => {
           self.characterAdvanceTimer+= 20;
         }
         chr = self.text[self.displayCutoff - 1];
-        if(chr && chr.match("[a-zA-Z0-9\\.,\!\?]")) {
+        if(chr && chr.match("[a-zA-Z0-9\\.,\!\?\-]")) {
           self.blip = self.state.game.sound.playSound(self.voice);
         }
         if(self.displayCutoff >= self.text.length && self.textPromise) {

@@ -18,5 +18,11 @@ export let colors = {
   },
   soliloquyText: Color(0.5, 0.5, 1, 1),
   notepad: Color("#fffc7a"),
-  notepadLines: Color("#c6c6ba")
+  notepadLines: Color("#c6c6ba"),
+  contacts: {
+    stripeA: Color(0.6, 0.6, 0.6, 1),
+    stripeB: Color(0.8, 0.8, 0.8, 1),
+    hoveredA: Color(0.6, 0.6, 0.7, 1),
+    hoveredB: Color(0.8, 0.8, 0.9, 1)
+  }
 };

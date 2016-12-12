@@ -77,9 +77,11 @@ export let Notepad = () => {
       self.pages = pages;
     },
     addNote(note) {
-      self.noteMap[note.id] = note;
-      self.notes.push(note);
-      self.computeLinewrap();
+      if(!self.noteMap[note.id]) {
+        self.noteMap[note.id] = note;
+        self.notes.push(note);
+        self.computeLinewrap();
+      }
     },
     step() {
       self.scale+= (self.scaleTgt-self.scale)*0.1;

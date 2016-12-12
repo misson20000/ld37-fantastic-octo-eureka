@@ -79,8 +79,18 @@
   },
   {
     "type": "sound",
+    "id": "game.sfx.textblip.male",
+    "src": "/game/textblip.wav"
+  },
+  {
+    "type": "sound",
     "id": "game.sfx.textblip.female",
     "src": "/game/femaleblip.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.sfx.textblip.hale",
+    "src": "/game/haleblip.wav"
   },
   {
     "type": "sound",
@@ -96,5 +106,31 @@
     "type": "sound",
     "id": "game.sfx.clue",
     "src": "/game/select.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.phone.ringing",
+    "src": "/game/phone/ring.wav"
+  },
+  {
+    "type": "sound",
+    "id": "game.phone.ringpickup",
+    "src": "/game/phone/ring_pick_up.wav"
+  },
+  {
+    "type": "texture",
+    "id": "game.font.gunny.texture",
+    "src": "/game/font/gunny_rewritten_regular_24.png"
+  },
+  {
+    "type": "font",
+    "id": "game.font.gunny",
+    "texture": "game.font.gunny.texture",
+    "xml": "/game/font/gunny_rewritten_regular_24.xml"
+  },
+  {
+    "type": "texture",
+    "id": "game.image.telephone",
+    "src": "/game/images/telephone.png"
   }
 ]

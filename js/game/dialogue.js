@@ -33,10 +33,6 @@ export let DialogueLoader = () => {
 export let DialogueInterpreter = () => {
   let tree, textbox, notepad;
 
-  let state = {
-    currentNode: null
-  };
-
   let extraCommands = {};
   
   let interpreter = {
@@ -96,6 +92,12 @@ export let DialogueInterpreter = () => {
         break;
       case "skippable":
         textbox.skippable();
+        break;
+      case "hide":
+        textbox.hide();
+        break;
+      case "unhide":
+        textbox.unhide();
         break;
       case "pause":
         return new Promise((resolve, reject) => {
@@ -163,7 +165,11 @@ export let DialogueInterpreter = () => {
         return textbox.choices(choices);
         break;
       case "jump":
-        return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue));
+        console.log("jumping in to " + dialogue.getAttribute("link"));
+        return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue)).then(() => {
+          console.log("returned from " + dialogue.getAttribute("link"));
+          return interpreter.interpret(dialogue.nextSibling);
+        });
       default:
         if(extraCommands[dialogue.localName]) {
           return extraCommands[dialogue.localName](dialogue).then(() => {

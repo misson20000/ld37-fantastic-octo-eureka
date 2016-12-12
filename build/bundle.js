@@ -2326,7 +2326,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.PlayState = undefined;
+	exports.PlayState = exports.lerp = undefined;
 	
 	var _assetmgr = __webpack_require__(7);
 	
@@ -2350,7 +2350,7 @@
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
-	var lerp = function lerp(a, b, x) {
+	var lerp = exports.lerp = function lerp(a, b, x) {
 	  return a + x * (b - a);
 	};
 	
@@ -2411,6 +2411,7 @@
 	  var self = {
 	    game: game,
 	    font: font,
+	    dialogue: dialogue,
 	    debugMode: false,
 	    availableCalls: {},
 	    camera: {
@@ -2440,6 +2441,7 @@
 	      self.addObject(self.telephone = obj.Telephone());
 	      self.addObject(self.fader = obj.Fader());
 	      self.addObject(self.textBox = obj.TextBox());
+	      self.telephone.textbox = self.textBox;
 	      dialogue.linkTextbox(self.textBox);
 	      dialogue.linkNotepad(self.notepad);
 	      dialogue.addCommand("unfade", function (params) {
@@ -2457,16 +2459,32 @@
 	        });
 	        return Promise.resolve();
 	      });
-	      dialogue.addCommand("addCall", function (elem) {
-	        self.availableCalls[elem.getAttribute("id")] = {
-	          link: elem.getAttribute("link"),
-	          title: elem.textContent.trim()
-	        };
+	      dialogue.addCommand("notebook", function (elem) {
+	        self.notepad.addNote({
+	          id: elem.getAttribute("id"),
+	          content: elem.textContent.trim()
+	        });
 	        return Promise.resolve();
 	      });
-	      self.fader.unfade();
-	      dialogue.begin("test.contradict").then(function () {
+	      dialogue.addCommand("addCall", function (elem) {
+	        self.telephone.addCall({
+	          link: elem.getAttribute("link"),
+	          title: elem.textContent.trim(),
+	          id: elem.getAttribute("id")
+	        });
+	        return Promise.resolve();
+	      });
+	      dialogue.addCommand("enableCalling", function (elem) {
+	        self.telephone.enabled = true;
+	        return Promise.resolve();
+	      });
+	      dialogue.addCommand("disableCalling", function (elem) {
+	        self.telephone.enabled = false;
+	        return Promise.resolve();
+	      });
+	      dialogue.begin("misc.debugmenu").then(function () {
 	        self.textBox.hide();
+	        self.fader.unfade();
 	      });
 	    },
 	    drawScene: function drawScene() {
@@ -2727,7 +2745,13 @@
 	  },
 	  soliloquyText: (0, _gfxutils.Color)(0.5, 0.5, 1, 1),
 	  notepad: (0, _gfxutils.Color)("#fffc7a"),
-	  notepadLines: (0, _gfxutils.Color)("#c6c6ba")
+	  notepadLines: (0, _gfxutils.Color)("#c6c6ba"),
+	  contacts: {
+	    stripeA: (0, _gfxutils.Color)(0.6, 0.6, 0.6, 1),
+	    stripeB: (0, _gfxutils.Color)(0.8, 0.8, 0.8, 1),
+	    hoveredA: (0, _gfxutils.Color)(0.6, 0.6, 0.7, 1),
+	    hoveredB: (0, _gfxutils.Color)(0.8, 0.8, 0.9, 1)
+	  }
 	};
 
 /***/ },
@@ -3172,7 +3196,8 @@
 	      self.hidden = false;
 	      self.mode = "text";
 	      if (self.textPromise && !self.textPromise.resolved && updatePromises) {
-	        self.textPromise.reject("interrupted");
+	        self.textPromise.resolve();
+	        //        self.textPromise.reject("interrupted");
 	      }
 	      text = self.text + text;
 	      self.text = text;
@@ -3215,6 +3240,7 @@
 	    },
 	    hide: function hide() {
 	      self.hidden = true;
+	      self.clear();
 	    },
 	    unhide: function unhide() {
 	      self.hidden = false;
@@ -3357,7 +3383,7 @@
 	            self.characterAdvanceTimer += 20;
 	        }
 	        chr = self.text[self.displayCutoff - 1];
-	        if (chr && chr.match("[a-zA-Z0-9\\.,\!\?]")) {
+	        if (chr && chr.match("[a-zA-Z0-9\\.,\!\?\-]")) {
 	          self.blip = self.state.game.sound.playSound(self.voice);
 	        }
 	        if (self.displayCutoff >= self.text.length && self.textPromise) {
@@ -3518,9 +3544,11 @@
 	      self.pages = pages;
 	    },
 	    addNote: function addNote(note) {
-	      self.noteMap[note.id] = note;
-	      self.notes.push(note);
-	      self.computeLinewrap();
+	      if (!self.noteMap[note.id]) {
+	        self.noteMap[note.id] = note;
+	        self.notes.push(note);
+	        self.computeLinewrap();
+	      }
 	    },
 	    step: function step() {
 	      self.scale += (self.scaleTgt - self.scale) * 0.1;
@@ -3654,30 +3682,122 @@
 	
 	var _palette = __webpack_require__(15);
 	
+	var _play = __webpack_require__(13);
+	
 	var Telephone = exports.Telephone = function Telephone() {
 	  var matStack = _math.Mat4Stack.create();
 	
 	  var font = void 0;
 	  var state = void 0;
 	  var iconMaterial = void 0;
+	  var textColor = (0, _gfxutils.Color)(0, 0, 0, 1);
 	
 	  var self = {
 	    x: 1180,
 	    y: 30,
 	    w: 80,
 	    h: 80,
+	    bgRect: {},
+	    calls: [],
+	    callMap: {},
 	    parallax: 0,
+	    transition: 0,
+	    target: 0,
 	    initialize: function initialize(lstate) {
 	      state = lstate;
 	      iconMaterial = state.game.render.createMaterial(_assetmgr.AssetManager.getAsset("base.shader.flat.textured"), {
 	        matrix: state.game.render.pixelMatrix,
 	        tex: _assetmgr.AssetManager.getAsset("game.image.telephone")
 	      });
+	      font = state.game.render.createFontRenderer(_assetmgr.AssetManager.getAsset("game.font.gunny"), _assetmgr.AssetManager.getAsset("base.shader.flat.texcolor"));
+	
+	      //      self.addCall({
+	      //        link: "foo",
+	      //        title: "Hello, WOrld!",
+	      //        id: "foo"
+	      //      });
 	    },
-	    draw: function draw(shapes, retrofont, opMatrix, matrix) {
+	    addCall: function addCall(call) {
+	      if (!self.callMap[call.id]) {
+	        self.calls.push(call);
+	        self.callMap[call.id] = call;
+	      }
+	    },
+	    modCall: function modCall(id, newCall) {
+	      var i = self.calls.indexOf(self.callMap[newCall.id]);
+	      self.calls[i] = newCall;
+	      self.callMap[newCall.id] = newCall;
+	    },
+	    mx: function mx() {
+	      return state.mouse.x - self.x;
+	    },
+	    my: function my() {
+	      return state.mouse.y - self.y;
+	    },
+	    bx: function bx() {
+	      return self.mx() - self.bgRect.x;
+	    },
+	    by: function by() {
+	      return self.my() - self.bgRect.y;
+	    },
+	
+	    enabled: true,
+	    tick: function tick(delta) {
+	      if (self.textbox.hidden && self.enabled && self.bx() > 0 && self.bx() < self.bgRect.w && self.by() > 0 && self.by() < self.bgRect.h) {
+	        self.target = 1;
+	      } else {
+	        self.target = 0;
+	      }
+	      var i = 0;
+	      var bgRect = self.bgRect;
+	      self.hovered = -1;
+	      for (var y = 80; y - bgRect.y < bgRect.h; y += 40) {
+	        var by = Math.min(y + 40, bgRect.h + bgRect.y);
+	        if (self.bx() > 0 && self.bx() < self.bgRect.w && self.my() > y && self.my() < by) {
+	          self.hovered = i;
+	          break;
+	        }
+	        i++;
+	      }
+	      if (self.textbox.hidden && self.enabled && state.game.mouse.justClicked() && self.hovered >= 0) {
+	        state.dialogue.begin(self.calls[self.hovered].link).then(function () {
+	          self.textbox.hide();
+	        });
+	      }
+	    },
+	    step: function step() {
+	      self.transition += (self.target - self.transition) * 0.1;
+	      var bgRect = self.bgRect;
+	      bgRect.x = (0, _play.lerp)(0, -300, self.transition);
+	      bgRect.y = 0;
+	      bgRect.w = (0, _play.lerp)(80, 380, self.transition);
+	      bgRect.h = Math.max(80, (0, _play.lerp)(-50, 440, self.transition));
+	    },
+	    draw: function draw(shapes, retrofont, matrix, opMatrix) {
+	      textColor.a = self.transition;
+	      var bgRect = self.bgRect;
+	      shapes.drawColoredRect(_gfxutils.Colors.WHITE, bgRect.x, bgRect.y, bgRect.x + bgRect.w, bgRect.y + bgRect.h, 0);
+	      var stripe = true;
+	      var i = 0;
+	      for (var _y = 80; _y - bgRect.y < bgRect.h; _y += 40) {
+	        var by = Math.min(_y + 40, bgRect.h + bgRect.y);
+	        shapes.drawColoredRect(stripe ? self.hovered == i ? _palette.colors.contacts.hoveredA : _palette.colors.contacts.stripeA : self.hovered == i ? _palette.colors.contacts.hoveredB : _palette.colors.contacts.stripeB, bgRect.x, _y, bgRect.x + bgRect.w, by, 0);
+	        stripe = !stripe;
+	        i++;
+	      }
+	      shapes.flush();
+	      font.useMatrix(matrix);
+	      font.draw(textColor, (0, _play.lerp)(0, bgRect.x + 10, self.transition), 20, 0, "Contacts:");
+	
+	      var y = 80;
+	      for (i = 0; i < self.calls.length; i++) {
+	        font.draw(textColor, (0, _play.lerp)(100, bgRect.x + 10, self.transition), y, 0, self.calls[i].title);
+	        y += 40;
+	      }
+	      font.flush();
+	
 	      shapes.useMaterial(iconMaterial, function () {
-	        console.log("HEY!");
-	        shapes.drawTexturedRect(0, 0, self.w, self.h * 0.7, 0, 0, 1, 0.7, 0);
+	        shapes.drawTexturedRect(3, 18, self.w - 3, 12 + self.h * 0.7, 0, 0, 1, 0.7, 0);
 	      });
 	    }
 	  };
@@ -3736,10 +3856,6 @@
 	  var tree = void 0,
 	      textbox = void 0,
 	      notepad = void 0;
-	
-	  var state = {
-	    currentNode: null
-	  };
 	
 	  var extraCommands = {};
 	
@@ -3800,6 +3916,12 @@
 	          break;
 	        case "skippable":
 	          textbox.skippable();
+	          break;
+	        case "hide":
+	          textbox.hide();
+	          break;
+	        case "unhide":
+	          textbox.unhide();
 	          break;
 	        case "pause":
 	          return new Promise(function (resolve, reject) {
@@ -3877,7 +3999,11 @@
 	          return textbox.choices(choices);
 	          break;
 	        case "jump":
-	          return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue));
+	          console.log("jumping in to " + dialogue.getAttribute("link"));
+	          return interpreter.begin(dialogue.getAttribute("link"), interpreter.findGroup(dialogue)).then(function () {
+	            console.log("returned from " + dialogue.getAttribute("link"));
+	            return interpreter.interpret(dialogue.nextSibling);
+	          });
 	        default:
 	          if (extraCommands[dialogue.localName]) {
 	            return extraCommands[dialogue.localName](dialogue).then(function () {

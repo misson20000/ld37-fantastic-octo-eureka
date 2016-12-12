@@ -83,6 +83,12 @@ export let Notepad = () => {
         self.computeLinewrap();
       }
     },
+    delNote(id) {
+      let note = self.noteMap[id];
+      let i = self.notes.indexOf(note);
+      self.notes.splice(i, 1);
+      self.noteMap[id] = null;
+    },
     step() {
       self.scale+= (self.scaleTgt-self.scale)*0.1;
     },

@@ -31,6 +31,7 @@
             <choices>
                 <choice link="how much did you know about the murder">How much did you know about the murder?</choice>
                 <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="how much did you know about the murder">
@@ -60,6 +61,7 @@
                 <choice link="what is your relationship with brianna">What is your relationship with Brianna?</choice>
                 <choice link="how much did you have to drink">How much did you have to drink, Ms. Greene?</choice>
                 <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="what is your relationship with brianna">
@@ -70,6 +72,7 @@
             <choices>
                 <choice link="how much did you have to drink">How much did you have to drink, Ms. Greene?</choice>
                 <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="how much did you have to drink">
@@ -95,6 +98,7 @@
             <person>Avery</person>
             <choices>
                 <choice link="did you see anything suspicious that night">Did you see anything suspicious that night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="did you see anything suspicious that night">
@@ -120,6 +124,7 @@
             <nod />
             <st>It was certainly strange.</st>
             <nod />
+            <clear />
             <person>Avery</person>
             <soliloquy>The server boy-</soliloquy>
             <pause length="170" />
@@ -129,6 +134,7 @@
             <choices>
                 <choice link="did you see what he was writing">Did you see what he was writing?</choice>
                 <choice link="how much did you know about the murder">How much do you know about the murder?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="did you see what he was writing">
@@ -181,12 +187,48 @@
             </choices>
         </dialogue>
         <dialogue id="anything else">
-            <st person="andrea">Not really, no</st>
+            <st person="andrea">Not really, no.</st>
+            <nod />
+            <clear />
             <jump link="end call" />
         </dialogue>
         <dialogue id="end call">
             <person>Avery</person>
             <st>Thank you for your cooperation, Ms. Greene. Stay close to the phone in case I have further questions.</st>
+            <nod />
+            <disableCalling />
+            <hide />
+            <pause length="4000" />
+            <jump link="misc.shortring" />
+            <jump link="hale.smiths ready" />
+            <enableCalling />
+        </dialogue>
+    </group>
+    <group id="misc">
+        <dialogue id="shortring">
+            <sfx>game.phone.ringing</sfx>
+            <person>Telephone</person>
+            <unskippable />
+            <sfx>game.phone.ringpickup</sfx>
+            <st>*Br-r-r-r-r-click*</st>
+            <space />
+            <pause length="800" />
+            <clear />
+            <skippable />
+        </dialogue>
+        <dialogue id="debugmenu">
+            <person>Debugger</person>
+            <unfade />
+            <addCall link="misc.debugmenu" title="Debug Menu" id="debug">Debug Menu</addCall>
+            <choices>
+                <choice link="hale.intro">Hale's Introduction</choice>
+                <choice link="andrea.end call">End of Andrea's Call</choice>
+                <choice link="null">Exit</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="null"></dialogue>
+        <dialogue id="unfade">
+            <unfade />
         </dialogue>
     </group>
     <group id="hale">
@@ -258,9 +300,26 @@
         <dialogue id="call1">
             <person>Hale</person>
             <st>Have you interviewed Andrea Greene yet? I'll call you as soon as I get updates on the case. Get to work, Saunders!</st>
+            <nod />
+            <clear />
+        </dialogue>
+        <dialogue id="smiths ready">
+            <person>Hale</person>
+            <st>Lina and Caleb Smith are ready for their interviews, Detective, are you any closer to solving this murder?</st>
+            <nod />
+            <clear />
+            <modCall id="hale" link="hale.call2" />
+            <addCall id="lina" link="lina.entry">Lina Smith</addCall>
+            <addCall id="caleb" link="caleb.entry">Caleb Smith</addCall>
+        </dialogue>
+        <dialogue id="call2">
+            <person>Hale</person>
+            <st>What are you doing talking to me, Detective? You're supposed to be solving a murder, not gossiping. Go talk to the Smiths.</st>
+            <nod />
+            <clear />
         </dialogue>
     </group>
-    <group id="smiths">
+    <group id="lina">
         <dialogue id="entry">
             <person>Lina</person>
             <st>This is Lina Smith, can I help you?</st>
@@ -306,6 +365,7 @@
             <choices>
                 <choice link="suspicious activity">Last night, did you see any suspicious activity from anyone?</choice>
                 <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="suspicious activity">
@@ -327,6 +387,7 @@
             <choices>
                 <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
                 <choice link="usnavi yolanda fight">Do you know anything else about the fight?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="last time elizabeth was seen">
@@ -342,6 +403,7 @@
             <choices>
                 <choice link="odd behaviour">Were any of them acting oddly?</choice>
                 <choice link="suspicious activity">Did you see any suspicious activity last night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="usnavi yolanda fight">
@@ -353,6 +415,7 @@
             <choices>
                 <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
                 <choice link="usnavi">What happened to Usnavi after?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="odd behaviour">
@@ -364,6 +427,7 @@
             <choices>
                 <choice link="reason of reaction">Can you think of any reason Alex would act like that?</choice>
                 <choice link="suspicious activity">Did you see any other suspicious activity that night?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="usnavi">
@@ -374,6 +438,7 @@
             <person>Avery</person>
             <choices>
                 <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
+                <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="reason of reaction">
@@ -381,12 +446,24 @@
             <st>I have no idea, he never gets angry at his friends so easily like that, not that I've seen, at least.</st>
             <nod />
             <clear />
-            <notebook id="unusual behaviour from alex">Alex shows out of the ordinary behaviour</notebook>
+            <notebook id="unusual behaviour from alex">Alex showed out of the ordinary behaviour</notebook>
             <person>Avery</person>
-            
+            <choices>
+                <choice link="suspicious activity">Did you see any other suspicious activity that night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
         </dialogue>
         <dialogue id="end call">
-            
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Mrs. Smith. Please stay close to the phone in case I have further questions.</st>
+            <nod />
+            <clear />
+        </dialogue>
+    </group>
+    
+    <group id="caleb">
+        <dialogue id="entry">
+           {
         </dialogue>
     </group>
     
@@ -401,7 +478,7 @@
             <clear />
             <person>Avery</person>
             <choices>
-                <evidence note="no new regulations" correct="no new regulations" wrong="wrong evidence">There'ss  prorlem...</evidence>
+                <evidence note="no new regulations" correct="no new regulations" wrong="wrong evidence">There's a problem...</evidence>
             </choices>
         </dialogue>
         <dialogue id="no new regulations">

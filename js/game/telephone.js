@@ -48,7 +48,7 @@ export let Telephone = () => {
         self.callMap[call.id] = call;
       }
     },
-    modCall(id, newCall) {
+    modCall(newCall) {
       let i = self.calls.indexOf(self.callMap[newCall.id]);
       self.calls[i] = newCall;
       self.callMap[newCall.id] = newCall;

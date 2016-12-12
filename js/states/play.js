@@ -124,11 +124,22 @@ export let PlayState = (game, transition) => {
         });
         return Promise.resolve();
       });
+      dialogue.addCommand("delNote", (elem) => {
+        self.notepad.delNote(elem.textContent.trim());
+      });
       dialogue.addCommand("addCall", (elem) => {
         self.telephone.addCall({
           link: elem.getAttribute("link"),
           title: elem.textContent.trim(),
           id: elem.getAttribute("id")
+        });
+        return Promise.resolve();
+      });
+      dialogue.addCommand("modCall", (elem) => {
+        self.telephone.modCall({
+          id: elem.getAttribute("id"),
+          link: elem.getAttribute("link"),
+          title: elem.textContent.trim()
         });
         return Promise.resolve();
       });

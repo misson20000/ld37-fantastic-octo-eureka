@@ -36,6 +36,8 @@ export let DialogueInterpreter = () => {
   let extraCommands = {};
   
   let interpreter = {
+    visitedTrees: {},
+    
     loadTree(ltree) {
       tree = ltree
     },
@@ -119,6 +121,7 @@ export let DialogueInterpreter = () => {
             }
             choices.push({
               content: choice.textContent.trim(),
+              visited: interpreter.visitedTrees[interpreter.getPathElement(interpreter.findTree(choice.getAttribute("link"), interpreter.findGroup(dialogue)))],
               callback: () => {
                 return interpreter.begin(choice.getAttribute("link"), interpreter.findGroup(dialogue));
               }
@@ -137,6 +140,7 @@ export let DialogueInterpreter = () => {
             let person = textbox.person;
             choices.push({
               content: choice.textContent.trim(),
+              visited: interpreter.visitedTrees[interpreter.getPathElement(interpreter.findTree(choice.getAttribute("correct"), interpreter.findGroup(dialogue)))],
               callback: () => {
                 return textbox.display(choice.textContent.trim()).then(() => {
                   return notepad.pickEvidence().then((evidence) => {
@@ -183,16 +187,24 @@ export let DialogueInterpreter = () => {
       return interpreter.interpret(dialogue.nextSibling);
     },
     findGroup(element) {
-      if(element.localName == "group") {
-        return element;
+      if(!element.parentElement) {
+        return null;
       }
-      if(element.parentElement) {
-        return interpreter.findGroup(element.parentElement);
-      } else {
-        throw "no group found";
+      if(element.parentElement.localName == "group") {
+        return element.parentElement;
       }
+      return interpreter.findGroup(element.parentElement);
     },
-    begin(identifier, scope = null) {
+    getPathElement(element) {
+      let parts = [element.getAttribute("id")];
+      let group = interpreter.findGroup(element);
+      while(group) {
+        parts.push(group.getAttribute("id"));
+        group = interpreter.findGroup(group);
+      }
+      return parts.reverse().join(".");
+    },
+    findTree(identifier, scope) {
       if(!tree) {
         throw "no dialogue tree has been loaded, you fool!";
       }
@@ -228,13 +240,18 @@ export let DialogueInterpreter = () => {
           }
         }
         if(!found) {
-          throw "could not find"
+          throw "could not find";
         }
       }
       if(dialogue.localName != "dialogue") {
         throw "path '" + identifier + "' does not refer to a <dialogue> tag. instead, it refers to a <" + dialogue.localName + "> tag";
       }
-
+      return dialogue;
+    },
+    begin(identifier, scope = null) {
+      let dialogue = interpreter.findTree(identifier, scope);
+      interpreter.visitedTrees[interpreter.getPathElement(dialogue)] = true;
+      console.log("hey");
       return interpreter.interpret(dialogue.children[0]);
     }
   };

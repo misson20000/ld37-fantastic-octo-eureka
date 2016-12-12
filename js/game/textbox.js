@@ -193,7 +193,7 @@ export let TextBox = () => {
           if(i == self.selectedChoice) {
             font.draw(Colors.WHITE, 5, y, 0, ">");
           }
-          font.draw(Colors.WHITE, 15, y, 0, self.choiceList[i].content);
+          font.draw(self.choiceList[i].visited ? colors.textbox.visited : Colors.WHITE, 15, y, 0, self.choiceList[i].content);
           y+= font.height + 4;
         }
         break;

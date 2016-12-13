@@ -20,6 +20,9 @@ export let Fader = () => {
     unfade() {
       self.fadeTarget = 0;
     },
+    fade() {
+      self.fadeTarget = 1;
+    },
     tick(delta) {
       if(self.fadeAmount > self.fadeTarget) {
         self.fadeAmount-= delta/500.0;

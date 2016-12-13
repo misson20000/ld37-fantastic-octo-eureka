@@ -37,6 +37,7 @@ export let DialogueInterpreter = () => {
   
   let interpreter = {
     visitedTrees: {},
+    flags: {},
     
     loadTree(ltree) {
       tree = ltree
@@ -79,7 +80,7 @@ export let DialogueInterpreter = () => {
           return interpreter.interpret(dialogue.nextSibling);
         });
       case "space":
-        return textbox.display(" ").then(() => {
+        return textbox.display(" ", true, false).then(() => {
           return interpreter.interpret(dialogue.nextSibling);
         });
       case "nod":
@@ -89,6 +90,18 @@ export let DialogueInterpreter = () => {
       case "clear":
         textbox.clear();
         break;
+      case "setFlag":
+        interpreter.flags[dialogue.getAttribute("id")] = dialogue.textContent.trim();
+        break;
+      case "ifFlag":
+        if(interpreter.flags[dialogue.getAttribute("id")] == dialogue.getAttribute("value")) {
+          return interpreter.interpret(dialogue.children[0]).then(() => {
+            return interpreter.interpret(dialogue.nextSibling);
+          });
+        }
+        break;
+      case "break":
+        return Promise.resolve();
       case "unskippable":
         textbox.unskippable();
         break;
@@ -181,7 +194,7 @@ export let DialogueInterpreter = () => {
           });
         } else {
           textbox.clear();
-          textbox.display("bad tag: " + dialogue.localName);
+          console.log("bad tag: " + dialogue.localName);
         }
       }
       return interpreter.interpret(dialogue.nextSibling);

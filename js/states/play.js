@@ -106,6 +106,10 @@ export let PlayState = (game, transition) => {
         self.fader.unfade();
         return Promise.resolve();
       });
+      dialogue.addCommand("fade", (params) => {
+        self.fader.fade();
+        return Promise.resolve();
+      });
       dialogue.addCommand("sfx", (elem) => {
         game.sound.playSound(AssetManager.getAsset(elem.textContent.trim()));
         return Promise.resolve();
@@ -151,7 +155,7 @@ export let PlayState = (game, transition) => {
         self.telephone.enabled = false;
         return Promise.resolve();
       });
-      dialogue.begin("misc.debugmenu").then(() => {
+      dialogue.begin("hale.intro").then(() => {
         self.textBox.hide();
         self.fader.unfade();
       });

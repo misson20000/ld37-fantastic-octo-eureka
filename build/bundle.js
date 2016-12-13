@@ -3771,6 +3771,9 @@
 	      self.hovered = -1;
 	      for (var y = 80; y - bgRect.y < bgRect.h; y += 40) {
 	        var by = Math.min(y + 40, bgRect.h + bgRect.y);
+	        if (i >= self.calls.length) {
+	          break;
+	        }
 	        if (self.bx() > 0 && self.bx() < self.bgRect.w && self.my() > y && self.my() < by) {
 	          self.hovered = i;
 	          break;

@@ -50,7 +50,7 @@ export let TextBox = () => {
     unskippable() {
       self.skippingEnabled = false;
     },
-    display(text, updatePromises=true) {
+    display(text, updatePromises=true, updateColor=true) {
       self.hidden = false;
       self.mode = "text";
       if(self.textPromise && !self.textPromise.resolved && updatePromises) {
@@ -61,7 +61,9 @@ export let TextBox = () => {
       self.text = text;
       self.characterAdvanceTimer = 30;
       self.nodding = false;
-      self.color = Colors.WHITE;
+      if(updateColor) {
+        self.color = Colors.WHITE;
+      }
       let lines = [];
       let lastBreak = 0;
       let lastI = 0;

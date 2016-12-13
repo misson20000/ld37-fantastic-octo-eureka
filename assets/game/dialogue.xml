@@ -143,13 +143,13 @@
             <pause length="170" />
             <space />
             <st>I didn't. I tried to ask him about it, and he said he was writing down connections or something.</st>
+            <notebook id="alexs notebook">Andrea asked Alex about notbook</notebook>
             <nod />
             <st>Rather peculiar if you ask me, but I never liked that boy in the first place.</st>
             <nod />
             <clear />
             <st>He tried to flirt with my sister and she could do far better than him.</st>
             <nod />
-            <notebook id="alexs notebook">Andrea asked Alex about notbook</notebook>
             <person>Avery</person>
             <choices>
                 <choice link="what do you mean flirting">What do you mean by that?</choice>
@@ -178,8 +178,8 @@
             <nod />
             <clear />
             <st>Apparently, he's an orphan from New York. No family, no friends, nothing to his name but the clothes on his back, but the Smiths let him work for them. He's damn lucky, that boy, but not lucky enough to get Brianna.</st>
-            <nod />
             <notebook id="andrea hates alex">Andrea has no fondness for Alex or his flirting with her sister</notebook>
+            <nod />
             <person>Avery</person>
             <choices>
                 <choice link="anything else">Is there anything else you have to say?</choice>
@@ -191,17 +191,17 @@
             <nod />
             <clear />
             <jump link="end call" />
-        </dialogue>
-        <dialogue id="end call">
-            <person>Avery</person>
-            <st>Thank you for your cooperation, Ms. Greene. Stay close to the phone in case I have further questions.</st>
-            <nod />
             <disableCalling />
             <hide />
             <pause length="4000" />
             <jump link="misc.shortring" />
             <jump link="hale.smiths ready" />
             <enableCalling />
+        </dialogue>
+        <dialogue id="end call">
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Ms. Greene. Stay close to the phone in case I have further questions.</st>
+            <nod />
         </dialogue>
     </group>
     <group id="misc">
@@ -223,6 +223,8 @@
             <choices>
                 <choice link="hale.intro">Hale's Introduction</choice>
                 <choice link="andrea.end call">End of Andrea's Call</choice>
+                <choice link="lina.end call trigger hale">End of Lina's Call</choice>
+                <choice link="caleb.end call trigger hale">End of Caleb's Call</choice>
                 <choice link="test.menu">Testing Menu</choice>
                 <choice link="null">Exit</choice>
             </choices>
@@ -295,8 +297,8 @@
             <st>Thank you, Officer Hale. I'll get right on that, and have this mystery solved in no time.</st>
             <nod />
             <clear />
-            <addCall id="andrea" link="andrea.entry">Andrea Greene</addCall>
             <addCall id="hale" link="hale.call1">Officer Hale</addCall>
+            <addCall id="andrea" link="andrea.entry">Andrea Greene</addCall>
         </dialogue>
         <dialogue id="call1">
             <person>Hale</person>
@@ -306,14 +308,14 @@
         </dialogue>
         <dialogue id="smiths ready">
             <person>Hale</person>
-            <st>Lina and Caleb Smith are ready for their interviews, Detective, are you any closer to solving this murder?</st>
+            <st>Lina and Caleb Smith are ready for their interviews. Detective, are you any closer to solving this murder?</st>
             <nod />
             <clear />
             <person>Avery</person>
             <st>As much closer as I can be when I've only interviewed one person so far, Officer. Thanks.</st>
             <nod />
             <clear />
-            <modCall id="hale" link="hale.call2" />
+            <modCall id="hale" link="hale.call2">Officer Hale</modCall>
             <addCall id="lina" link="lina.entry">Lina Smith</addCall>
             <addCall id="caleb" link="caleb.entry">Caleb Smith</addCall>
         </dialogue>
@@ -322,6 +324,119 @@
             <st>What are you doing talking to me, Detective? You're supposed to be solving a murder, not gossiping. Go talk to the Smiths.</st>
             <nod />
             <clear />
+        </dialogue>
+        <dialogue id="me update">
+            <person>Hale</person>
+            <st>The body has been identified as male, but we're still trying to match with a person. Hercules Miller and Usnavi Malster are ready to be interviewed now as well.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Thank you, Officer Hale.</st>
+            <nod />
+            <clear />
+            <modCall id="hale" link="hale.call3">Officer Hale</modCall>
+            <addCall id="hercules" link="hercules.entry">Hercules Miller</addCall>
+            <addCall id="usnavi" link="usnavi.entry">Usnavi Malster</addCall>
+        </dialogue>
+        <dialogue id="call3">
+            <person>Hale</person>
+            <st>Unless you have someone for me to arrest, Detective, I suggest you go interview Malster, and Miller.</st>
+            <nod />
+            <clear />
+        </dialogue>
+        <group id="finale">
+            <dialogue id="found the murderer">
+              <person>Avery</person>
+              <st>Officer Hale, I believe I have found the murderer.</st>
+              <nod />
+              <clear />
+              <person>Hale</person>
+              <st>Really? Who is it?</st>
+              <nod />
+              <clear />
+              <jump link="found the murderer page 1" />
+            </dialogue>
+            <dialogue id="found the murderer page 1">
+              <person>Avery</person>
+              <choices>
+                <choice link="usnavi is murderer">Usnavi Malster</choice>
+                <choice link="andrea is murderer">Andrea Greene</choice>
+                <choice link="hercules is murderer">Hercules Miller</choice>
+                <choice link="found the murderer page 2">Next Page</choice>
+                <choice link="didnt find murderer nevermind">Nevermind. I don't know.</choice>
+              </choices>
+           </dialogue>
+            <dialogue id="found the murderer page 2">
+              <person>Avery</person>
+              <choices>
+                <choice link="jeremy is murderer">Jeremy Lova</choice>
+                <choice link="alex is murderer">Alex Triff</choice>
+                <choice link="found the murderer page 1">Previous Page</choice>
+                <choice link="didnt find murderer nevermind">Nevermind. I don't know.</choice>
+              </choices>
+            </dialogue>
+            <dialogue id="didnt find murderer nevermind">
+              <person>Avery</person>
+              <st>Nevermind. I thought I had something there.</st>
+              <nod />
+              <clear />
+              <person>Hale</person>
+              <st>Stop wasting our valuable time and figure out who that murderer is, Detective! Call me back as soon as you have it figured out!</st>
+              <nod />
+              <clear />
+            </dialogue>
+            <dialogue id="usnavi is murderer">
+                <jump link="genericwrong" />
+            </dialogue>
+            <dialogue id="andrea is murderer">
+                <person>Avery</person>
+                <st>Andrea Greene was the murderer.</st>
+                <nod /> 
+                <clear />
+                
+                <person>Hale</person>
+                <st>That makes sense. Great work, Detective. I'll see you on our next case.</st>
+                <nod />
+                <clear />
+                <fade />
+                <break />
+                
+                <person>Hale</person>
+                <st>Are you sure? How did you figure it out?</st>
+                <nod />
+                <clear />
+                <choices>
+                    <evidence note="FILL IN NOTE HERE" correct="andrea is murderer 2" wrong="avery boy you one cray cray deteckive">I have written in my notebook that...</evidence>
+                    <choice link="didnt find murderer nevermind">Nevermind. I don't know.</choice>
+              </choices>
+            </dialogue>
+            <dialogue id="hercules is murderer">
+                <jump link="genericwrong" />
+            </dialogue>
+            <dialogue id="jeremy is murderer">
+                <jump link="genericwrong" />
+            </dialogue>
+            <dialogue id="alex is murderer">
+                <jump link="genericwrong" />
+            </dialogue>
+            <dialogue id="andrea is murderer 2">
+                
+            </dialogue>
+            <dialogue id="genericwrong">
+                <person>Hale</person>
+                <st>No, that can't be. Are you sure? Try again.</st>
+                <nod />
+                <clear />
+                <jump link="found the murderer" />
+            </dialogue>
+        </group>
+        <dialogue id="finale entry">
+            <modCall id="hale" link="hale.finale.found the murderer">Officer Hale</modCall>
+            <person>Hale</person>
+            <st>Detective, it seems that Brianna Greene is in shock and can't be interviewed. Are you abe to use the interviews you have to find the murderer?</st>
+            <nod />
+            <clear />
+            <jump link="found the murderer" />
         </dialogue>
     </group>
     <group id="lina">
@@ -437,13 +552,13 @@
         </dialogue>
         <dialogue id="usnavi">
             <person>Lina</person>
-            <st>He stayed until after the fireworks. Didn't have much to drink, and drove home around twelve forty-five, I'd say. I drove Hercules Miller home shortly afterwards, I offered to drive him too, but he refused.</st>
+            <st>He stayed until after the fireworks. Didn't have much to drink, and drove home around twelve forty-five, I'd say. I drove Hercules Miller home shortly afterwards, I offered to drive Usnavi too, but he refused.</st>
             <nod />
             <clear />
             <person>Avery</person>
             <choices>
                 <choice link="last time elizabeth was seen">When was the last time you saw Elizabeth?</choice>
-                <choice link="end call">End Call</choice>
+                <choice link="end call trigger hale">End Call</choice>
             </choices>
         </dialogue>
         <dialogue id="reason of reaction">
@@ -458,6 +573,18 @@
                 <choice link="end call">End Call</choice>
             </choices>
         </dialogue>
+        <dialogue id="end call trigger hale">
+            <jump link="end call" />
+            <setFlag id="talkedToLina">true</setFlag>
+            <ifFlag id="talkedToCaleb" value="true">
+                <disableCalling />
+                <hide />
+                <pause length="4000" />
+                <jump link="misc.shortring" />
+                <jump link="hale.me update" />
+                <enableCalling /> 
+            </ifFlag>
+        </dialogue>
         <dialogue id="end call">
             <person>Avery</person>
             <st>Thank you for your cooperation, Mrs. Smith. Please stay close to the phone in case I have further questions.</st>
@@ -465,10 +592,311 @@
             <clear />
         </dialogue>
     </group>
-    
     <group id="caleb">
         <dialogue id="entry">
-           {
+            <person>Caleb</person>
+            <st>Hello, this is Caleb Smith. Who's calling?</st>
+            <nod />
+            <clear />
+            <Person>Avery</Person>
+            <st>This is Detective Avery Saunders with Eagle Eye Detective Agency.</st>
+            <nod />
+            <clear />
+            <person>Caleb</person>
+            <st>Have you got any news on my daughter yet? Or my missing staff? They're like family to us, I'd hate for anything to happen to any of them...</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>We don't, not yet, but you might be able to help us by telling us what happened last night.</st>
+            <nod />
+            <clear />
+            <person>Caleb</person>
+            <st>Oh, of course, Detective, anything to help out.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="last time caleb saw elizabeth">When was the last time you saw your daughter?</choice>
+                <choice link="walk through of night">Can you tell me all of what you remember of last night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="last time caleb saw elizabeth">
+            <person>Caleb</person>
+            <st>Last time I saw her, it was a little after the fireworks, she was cleaning up some bottles that someone left in the yard. She asked if I had seen Alex, or Jeremy, her friends, but I hadn't. She said she was gonna look for them.</st>
+            <nod />
+            <clear />
+            <notebook id="eliza last seen">Elizabeth last seen by Caleb after midnight. No sign of Jeremy or Alex.</notebook>
+            <person>Avery</person>
+            <choices>
+                <choice link="walk through of night">Can you tell me what happened the rest of the night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="walk through of night">
+            <person>Caleb</person>
+            <st>Well, let's see... I talked to young Brianna for a while. Her and Elizabeth are friends, but not very close. She's such a sweet girl. I sure hope she can recover from finding the body...</st>
+            <nod />
+            <clear />
+            <st>Oh, and around ten, or so, I overheard an arguement between Alex and Hercules Miller. Hercules was the one who took Alex in when he moved here from New York, and he's like a brotherly figure, of sorts.</st>
+            <nod />
+            <clear />
+            <st>Anyways, from what I heard, Alex didn't appreciate Hercules being so overprotective of him. I don't know what he did to bring that on, but Hercules seemed pretty adament that Alex did need his protection from whatever it was.</st>
+            <nod />
+            <clear />
+            <st>Alex said something about "dealing with worse than a few weak blows", whatever that means. I left at that point, not wanting to evesdrop.</st>
+            <nod />
+            <clear />
+            <st>Nothing really happened after that. Set off fireworks at midnight. Went to bed around three in the morning.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="last time caleb saw elizabeth">When was the last time you saw Elizabeth?</choice>
+                <choice link="saying something strange">Did anyone you talk to say anything odd or act strange?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="saying something strange">
+            <person>Caleb</person>
+            <st>Not that I can think of that I haven't already mentioned... Well. At one point, Yolanda said that she was going to strangle Usnavi one of these days, but she often says that when she's frustrated with him.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Is that all?</st>
+            <nod />
+            <clear />
+            <person>Caleb</person>
+            <st>I think- Wait, no, it isn't. I just remembered this. It didn't happen last night, but a few days ago, Alex wanted to know all about hunting, even though I know he hates guns. His dad actually died in a robbery gone wrong.</st>
+            <nod />
+            <clear />
+            <st>Shame, really. I can't imagine why he was so interested, and when I asked, he said something about bears being around here, and how he needed to know for self defense.</st>
+            <nod />
+            <clear />
+            <notebook id="guns">Alex showed sudden interest in guns days before the party.</notebook>
+            <person>Avery</person>
+            <choice link="last time caleb saw elizabeth">When was the last time you saw Elizabeth?</choice>
+            <choice link="end call trigger hale">End Call</choice>
+        </dialogue>
+        <dialogue id="end call trigger hale">
+            <jump link="end call" />
+            <setFlag id="talkedToCaleb">true</setFlag>
+            <ifFlag id="talkedToLina" value="true">
+                <disableCalling />
+                <hide />
+                <pause length="4000" />
+                <jump link="misc.shortring" />
+                <jump link="hale.me update" />
+                <enableCalling />  
+            </ifFlag>
+        </dialogue>
+        <dialogue id="end call">
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Mr. Smith. Please stay close to the phone in case I have further questions.</st>
+            <nod />
+            <clear />
+        </dialogue>
+    </group>
+    <group id="hercules">
+        <dialogue id="entry">
+            <Person>Hercules</Person>
+            <st>Hello? Who is this?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Hercules Miller? This is Detective Avery Saunders with Eagle Eye Detective Agency.</st>
+            <nod />
+            <clear />
+            <person>Hercules</person>
+            <st>Please tell me you've found Alex Triff, he's like my little brother.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>I'm afraid that we haven't found anyone yet. Do you think you could answer some questions for me?</st>
+            <nod />
+            <clear />
+            <person>Hercules</person>
+            <st>Yes, of course, anything to help find Alex.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="last time alex was seen">When was the last time you saw Alex?</choice>
+                <choice link="hercs version">What can you tell me about what happened last night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="last time alex was seen">
+            <person>Hercules</person>
+            <st>I saw him just before the fireworks, he said that he needed to cool off, and that he didn't want me following him, so I didn't. Wish I would've.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="hercs version">What do you remember from last night?</choice>
+                <choice link="why">Why did he have to "cool off"?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="why">
+            <person>Hercules</person>
+            <st>We got into a drunken argument. He said I was overprotective, and that I wasn't his actual family. I said some stuff I regret more than anything else right now.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="like what">What kind of things did you say?</choice>
+                <choice link="hercs version">What else happened that night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="like what">
+            <person>Hercules</person>
+            <st>I... It doesn't matter, okay? The point is that Alex is missing, and h-he could be that dead corpse. Not something awful I said when I was drunk, that might be my last words to him.</st>
+            <notebook id="hercules to alex">Hercules is very defensive when it comes to what he said to Alex.</notebook>
+            <person>Avery</person>
+            <choices>
+                <choice link="hercs version">What else happened that night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="hercs version">
+            <person>Hercules</person>
+            <st>Well, at around seven or eight, Andrea Greene grabbed Alex's notebook, and accussed him of "taking everyone's secrets to exploit them", and then threatened to rip it up.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <evidence id="alexs notebook" correct="call him out" wrong="got it wrong change these ids they suck">There's a problem...</evidence>
+                <choice link="carry on">Carry on.</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="carry on">
+            <st>Alex, of course, snapped at her. That's where he keeps all of his connections, you know, he wants to be a lawyer, but he doesn't have money for school. He's getting anything he can to help himself get there.</st>
+            <nod />
+            <clear />
+            <st>It was a big argument, and I had to break up the fight. I have a feeling the notebook isn't the real reason Andrea was upset with him, but I don't know what was.</st>
+            <nod />
+            <clear />
+            <st>She’s always hated him, nobody knows why. Anyways, he stormed off with the notebook, didn’t see him until later when he cornered me, and told me that he didn’t need a babysitter to deal with his fights for him.</st>
+            <nod />
+            <clear />
+            <st>I knew he was drunk, and I told him as much and he said, "Exactly my point! You can't baby me. I'm a big boy, Herc, I can damn well take care of myself." He left. Didn't see him until later, when I bumped into him just before the fireworks.</st>
+            <nod />
+            <clear />
+            <st>I was wasted at that point. He said something about having a big fight with Jeremy Lova, and I tried to help him fix it, and he called me an overprotective piece of shit, and ran off again. Mrs. Smith took me home after the fireworks.</st>
+            <nod />
+            <clear />
+            <setFlag id="talkedToHercules">true</setFlag>
+            <person>Avery</person>
+            <choices>
+                <choice link="last time alex was seen">When was the last time you saw Alex?</choice>
+                <choice link="end call trigger hale">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="end call trigger hale">
+            <jump link="end call" />
+            <setFlag id="talkedToHercules">true</setFlag>
+            <ifFlag id="talkedToUsnavi" value="true">
+                <disableCalling />
+                <hide />
+                <pause length="4000" />
+                <jump link="misc.shortring" />
+                <jump link="hale.finale entry" />
+                <enableCalling />  
+            </ifFlag>
+        </dialogue>
+        <dialogue id="end call">
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Mr. Miller. Please stay close to the phone in case I have further questions.</st>
+            <nod />
+            <clear />
+        </dialogue>
+    </group>
+    <group id="usnavi">
+        <dialogue id="entry">
+            <person>Usnavi</person>
+            <st>Hello, this is Usnavi Malster.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>This is Detective Avery Saunders with Eagle Eye Detective Agency.</st>
+            <nod />
+            <clear />
+            <person>Usnavi</person>
+            <st>Is this about last night?</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>It is. Do you think you could answer some questions for me?</st>
+            <nod />
+            <clear />
+            <person>Hercules</person>
+            <st>Sure, yeah, I'd like to help in anyway I can.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice link="usnavis version">What can you tell me about what happened last night?</choice>
+                <choice link="end call">End Call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="usnavis version">
+            <person>Usnavi</person>
+            <st>I arrived at the Smith Manor around four, which would be early, except I was actually helping my girlfriend, Yolanda, get eveything ready for the party. We had an arguement, we always do.</st>
+            <nod />
+            <clear />
+            <person>Usnavi</person>
+            <st>Don't even remember what it was about, honestly, but I went out into the main hall to wait it out. I got kind of tipsy, and went back to Yolanda, and said something stupid. She got upset.</st>
+            <nod />
+            <clear />
+            <person>Usnavi</person>
+            <st>She refused to talk to me for the rest of the night. I think she went home early, b-but... Now, no one can find her... I-I'm sorry, I just...</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <st>Take your time.</st>
+            <nod />
+            <clear />
+            <person>Usnavi</person>
+            <st>Right, right. Sorry. I went home afer the fireworks, once I was sobered up.</st>
+            <nod />
+            <clear />
+            <person>Avery</person>
+            <choices>
+                <choice id="that it">Is that all?</choice>
+                <choice link="end call">End call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="that it">
+            <person>Usnavi</person>
+            <st>Yeah, I don't remeber anything else- Oh wait. I do remember something weird. You know the server boy, Alex? He was super pissed at his friend, uh... Jared or whatever. Was saying some pretty violent stuff.</st>
+            <nod />
+            <clear />
+            <notebook id="alex was mad at jeremy">Alex has been noted to say some "violent stuff" about Jeremy.</notebook>
+            <setFlag id="talkedToUsnavi">true</setFlag>
+            <person>Avery</person>
+            <choices>
+                <choice id="end call trigger hale">End call</choice>
+            </choices>
+        </dialogue>
+        <dialogue id="end call trigger hale">
+            <jump link="end call" />
+            <setFlag id="talkedToUsnavi">true</setFlag>
+            <ifFlag id="talkedToHercules" value="true">
+                <disableCalling />
+                <hide />
+                <pause length="4000" />
+                <jump link="misc.shortring" />
+                <jump link="hale.finale entry" />
+                <enableCalling />  
+            </ifFlag>
+        </dialogue>
+        <dialogue id="end call">
+            <person>Avery</person>
+            <st>Thank you for your cooperation, Mr. Miller. Please stay close to the phone in case I have further questions.</st>
+            <nod />
+            <clear />
         </dialogue>
     </group>
     
@@ -533,7 +961,7 @@
         <dialogue id="modcall2">
             <person>Debugger</person>
             <st>modCall stage 2</st>
-            <modCall id="modcalltest">test.modcall3</modCall>
+            <modCall id="modcalltest" link="test.modcall3">modCall test</modCall>
             <nod />
             <clear />
         </dialogue>
